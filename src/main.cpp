@@ -11,6 +11,7 @@
 #include <cx2_mem_vars/a_bool.h>
 
 #include <sys/time.h>
+#include <fstream>
 
 #include "webclienthdlr.h"
 
@@ -61,8 +62,7 @@ public:
         globalArguments->addCommandLineOption("HTTP Options", 'a', "laddr" , "Listen Address"  , "*", Abstract::TYPE_STRING);
         globalArguments->addCommandLineOption("HTTP Options", 't', "threads" , "Max Concurrent Connections (Threads)"  , "1024", Abstract::TYPE_UINT16);
 
-        globalArguments->addCommandLineOption("HTTP Security", 'u', "user" , "HTTP User"  , "", Abstract::TYPE_STRING);
-        globalArguments->addCommandLineOption("HTTP Security", 'p', "pass" , "HTTP Pass"  , "", Abstract::TYPE_STRING);
+        globalArguments->addCommandLineOption("HTTP Security", 'p', "passfile" , "HTTP User/Pass File"  , "", Abstract::TYPE_STRING);
 
 #ifdef WITH_SSL_SUPPORT
         globalArguments->addCommandLineOption("TLS Options", 'k', "keyfile" , "X.509 Private Key Path (if not defined, then HTTP)"  , "", Abstract::TYPE_STRING);
@@ -88,9 +88,32 @@ public:
         rpcLog->setUsingPrintDate(true);
         rpcLog->setModuleAlignSize(36);
 
-        user = globalArguments->getCommandLineOptionValue("user")->toString();
-        pass  = globalArguments->getCommandLineOptionValue("pass")->toString();
 
+        std::string passFile = globalArguments->getCommandLineOptionValue("passfile")->toString();
+
+        if ( !passFile.empty() )
+        {
+            std::ifstream file(passFile);
+            if (file.is_open()) {
+
+                if (!std::getline(file, user))
+                {
+                    log->log0(__func__,Logs::LEVEL_CRITICAL, "Password File '%s' require at least 2 lines [user/pass)", passFile.c_str());
+                    exit(-14);
+                }
+                if (!std::getline(file, pass))
+                {
+                    log->log0(__func__,Logs::LEVEL_CRITICAL, "Password File '%s' require at least 2 lines (user/pass]", passFile.c_str());
+                    exit(-15);
+                }
+                file.close();
+            }
+            else
+            {
+                log->log0(__func__,Logs::LEVEL_CRITICAL, "Failed to open user/password file '%s'", passFile.c_str());
+                exit(-13);
+            }
+        }
 
         listenAddress         = globalArguments->getCommandLineOptionValue("laddr")->toString();
         httpDocumentRootDir   = globalArguments->getCommandLineOptionValue("xdir")->toString();
