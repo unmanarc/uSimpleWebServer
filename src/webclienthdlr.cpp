@@ -1,10 +1,11 @@
 #include "webclienthdlr.h"
 #include <cx2_mem_vars/b_mmap.h>
 #include <boost/filesystem.hpp>
+#include <cx2_netp_http/streamencoder_url.h>
 
 using namespace CX2::Network::HTTP;
 using namespace boost::filesystem;
-
+ using namespace CX2::Memory::Streams;
 WebClientHdlr::WebClientHdlr(void *parent, CX2::Memory::Streams::Streamable *sock) : HTTPv1_Server(sock)
 {
 }
@@ -26,6 +27,8 @@ eHTTP_RetCode WebClientHdlr::processClientRequest()
         {
             getResponseDataStreamer()->writeString("401: Unauthorized.");
             rpcLog->log(CX2::Application::Logs::LEVEL_WARN, remotePairAddress,"","", "", "fileServer", 65535, "R/401: %s",getRequestURI().c_str());
+
+            *(responseData().authenticate) = "Authentication Required";
 
             ret = HTTP_RET_401_UNAUTHORIZED;
             return ret;
@@ -52,29 +55,37 @@ eHTTP_RetCode WebClientHdlr::processClientRequest()
         if (sRealRelativePath == "") sRealRelativePath = "/";
         ret = HTTP_RET_200_OK;
 
-        getResponseDataStreamer()->writeString("Index of "  + sRealRelativePath + "\n\n");
+        *(responseData().contentType) = "text/html";
+
+        getResponseDataStreamer()->writeString("<html>");
+        getResponseDataStreamer()->writeString("<body>");
+        getResponseDataStreamer()->writeString("<h1>Index of "  + htmlEncode(sRealRelativePath)  + "</h1>\n\n");
+
         rpcLog->log(CX2::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "D/%03d: %s",HTTP_Status::getHTTPRetCodeValue(ret),sRealRelativePath.c_str());
         path p (sRealFullPath);
 
-        getResponseDataStreamer()->writeString( std::string("[..]\n"));
+        getResponseDataStreamer()->writeString( std::string("[<a href='..'>..</a>]<br><br>\n"));
 
         directory_iterator it{p};
           while (it != directory_iterator{})
           {
+              // TODO: checkar que el URL encoding no deje los caracteres HTML por fuera...
               if (boost::filesystem::is_directory(it->path()))
               {
-                    getResponseDataStreamer()->writeString( std::string("[") + it->path().filename().c_str() + std::string("]\n"));
+                    getResponseDataStreamer()->writeString( "[<a href=\"" + Encoders::URL::encodeURLStr(it->path().filename().c_str()) + "/\">" + htmlEncode(it->path().filename().c_str()) + "</a>]<br>\n");
               }
               else if (boost::filesystem::is_regular_file(it->path()))
               {
-                  getResponseDataStreamer()->writeString(std::string("- ") +it->path().filename().c_str() + std::string("\n"));
+                  getResponseDataStreamer()->writeString("- <a href=\"" + Encoders::URL::encodeURLStr(it->path().filename().c_str())+ "\">" + htmlEncode(it->path().filename().c_str()) + "</a><br>\n");
               }
               else
               {
-                  getResponseDataStreamer()->writeString( std::string("<") + it->path().filename().c_str() + std::string(">\n"));
+                  getResponseDataStreamer()->writeString( "<a href=\"" + Encoders::URL::encodeURLStr(it->path().filename().c_str()) + "\">" + htmlEncode(it->path().filename().c_str()) + "</a><br>\n");
               }
               it++;
           }
+          getResponseDataStreamer()->writeString("</body>");
+          getResponseDataStreamer()->writeString("</html>");
     }
     else
     {
