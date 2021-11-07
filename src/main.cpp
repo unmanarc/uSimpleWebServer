@@ -81,7 +81,7 @@ public:
         log->setModuleAlignSize(36);
 
         rpcLog = new Logs::RPCLog();
-        rpcLog->setPrintEmptyFields(true);
+        rpcLog->setPrintEmptyFields(false);
         rpcLog->setUserAlignSize(1);
         rpcLog->setUsingAttributeName(false);
         rpcLog->setUsingColors(true);
