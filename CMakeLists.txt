@@ -42,10 +42,14 @@ endif()
 target_link_libraries(${APP_NAME} "-lpthread")
 target_link_libraries(${APP_NAME} "-ldl")
 
-
-target_link_libraries(${APP_NAME} "boost_filesystem.a")
-target_link_libraries(${APP_NAME} "boost_regex.a")
-
+if (CENTOS7SUPPORT)
+    target_link_libraries(${APP_NAME} "-lboost_system")
+    target_link_libraries(${APP_NAME} "-lboost_filesystem")
+    target_link_libraries(${APP_NAME} "-lboost_regex")
+else()
+    target_link_libraries(${APP_NAME} "boost_filesystem.a")
+    target_link_libraries(${APP_NAME} "boost_regex.a")
+endif()
 
 if (WIN32)
     target_link_libraries(${APP_NAME} "-lws2_32")
