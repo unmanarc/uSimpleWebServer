@@ -64,6 +64,9 @@ public:
 
         globalArguments->addCommandLineOption("HTTP Security", 'p', "passfile" , "HTTP User/Pass File"  , "", Abstract::TYPE_STRING);
 
+        globalArguments->addCommandLineOption("Application", 's', "sys" , "Sys Log Mode (don't be fancy, compatible with systemctl)"  , "false", Abstract::TYPE_BOOL);
+
+
 #ifdef WITH_SSL_SUPPORT
         globalArguments->addCommandLineOption("TLS Options", 'k', "keyfile" , "X.509 Private Key Path (if not defined, then HTTP)"  , "", Abstract::TYPE_STRING);
         globalArguments->addCommandLineOption("TLS Options", 'c', "certfile" , "X.509 Certificate Path (if not defined, then HTTP)"  , "", Abstract::TYPE_STRING);
@@ -72,20 +75,23 @@ public:
 
     bool _config(int argc, char *argv[], Arguments::GlobalArguments * globalArguments)
     {
+
+        bool configUseFancy    = !((Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("sys"))->getValue();
+
         log = new Logs::AppLog();
         log->setPrintEmptyFields(true);
         log->setUserAlignSize(1);
         log->setUsingAttributeName(false);
-        log->setUsingColors(true);
-        log->setUsingPrintDate(true);
+        log->setUsingColors(configUseFancy);
+        log->setUsingPrintDate(configUseFancy);
         log->setModuleAlignSize(36);
 
         rpcLog = new Logs::RPCLog();
         rpcLog->setPrintEmptyFields(false);
         rpcLog->setUserAlignSize(1);
         rpcLog->setUsingAttributeName(false);
-        rpcLog->setUsingColors(true);
-        rpcLog->setUsingPrintDate(true);
+        rpcLog->setUsingColors(configUseFancy);
+        rpcLog->setUsingPrintDate(configUseFancy);
         rpcLog->setModuleAlignSize(36);
 
 
