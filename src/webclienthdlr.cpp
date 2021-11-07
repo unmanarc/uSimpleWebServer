@@ -18,6 +18,21 @@ eHTTP_RetCode WebClientHdlr::processClientRequest()
 {
     std::string sRealRelativePath, sRealFullPath;
     eHTTP_RetCode ret  = HTTP_RET_404_NOT_FOUND;
+    auto reqData = requestData();
+
+    if (!pass.empty())
+    {
+        if (reqData.AUTH_PASS != pass || reqData.AUTH_USER!= user)
+        {
+            getResponseDataStreamer()->writeString("401: Unauthorized.");
+            rpcLog->log(CX2::Application::Logs::LEVEL_WARN, remotePairAddress,"","", "", "fileServer", 65535, "R/401: %s",getRequestURI().c_str());
+
+            ret = HTTP_RET_401_UNAUTHORIZED;
+            return ret;
+        }
+    }
+
+    //////////////////////////////////////////////////////////////////////////
 
     bool isDir = false;
 
@@ -30,13 +45,14 @@ eHTTP_RetCode WebClientHdlr::processClientRequest()
         // Evaluate...
         ret = HTTP_RET_200_OK;
         rpcLog->log(CX2::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/%03d: %s",HTTP_Status::getHTTPRetCodeValue(ret),sRealRelativePath.c_str());
-//        rpcLog->log(CX2::Application::Logs::LEVEL_DEBUG, remotePairAddress,"","", "", "fileServer", 2048, "R LOCAL/%03d: %s",HTTP_Status::getHTTPRetCodeValue(ret),sRealFullPath.c_str());
+        rpcLog->log(CX2::Application::Logs::LEVEL_DEBUG, remotePairAddress,"","", "", "fileServer", 2048, "R LOCAL/%03d: %s",HTTP_Status::getHTTPRetCodeValue(ret),sRealFullPath.c_str());
     }
     else if (getLocalFilePathFromURI(resourcesLocalPath, &sRealRelativePath, &sRealFullPath, "", &isDir) && isDir)
     {
         if (sRealRelativePath == "") sRealRelativePath = "/";
+        ret = HTTP_RET_200_OK;
 
-        getResponseDataStreamer()->writeString("Directory list for "  + sRealRelativePath + "\n\n");
+        getResponseDataStreamer()->writeString("Index of "  + sRealRelativePath + "\n\n");
         rpcLog->log(CX2::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "D/%03d: %s",HTTP_Status::getHTTPRetCodeValue(ret),sRealRelativePath.c_str());
         path p (sRealFullPath);
 
@@ -67,6 +83,16 @@ eHTTP_RetCode WebClientHdlr::processClientRequest()
     }
 
     return HTTP_RET_200_OK;
+}
+
+void WebClientHdlr::setUser(const std::string &newUser)
+{
+    user = newUser;
+}
+
+void WebClientHdlr::setPass(const std::string &newPass)
+{
+    pass = newPass;
 }
 
 

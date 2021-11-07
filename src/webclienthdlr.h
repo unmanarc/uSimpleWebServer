@@ -21,6 +21,10 @@ public:
     const std::string &getRemoteIP() const;
     void setRemoteIP(const std::string &newRemoteIP);
 
+    void setPass(const std::string &newPass);
+
+    void setUser(const std::string &newUser);
+
 protected:
     /**
      * @brief processClientRequest Process web client request
@@ -31,6 +35,7 @@ protected:
 private:
     std::string resourcesLocalPath;
     CX2::Application::Logs::RPCLog * rpcLog;
+    std::string user,pass;
 
 };
 

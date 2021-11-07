@@ -56,10 +56,14 @@ public:
         globalArguments->setDescription(std::string("Unmanarc's HTTP Server"));
 
         globalArguments->addCommandLineOption("HTTP Options", 'x', "xdir" , "HTTP Document Root Directory"  , ".", Abstract::TYPE_STRING );
-        globalArguments->addCommandLineOption("HTTP Options", 'p', "lport" , "Local HTTP Port"  , "8001", Abstract::TYPE_UINT16);
+        globalArguments->addCommandLineOption("HTTP Options", 'l', "lport" , "Local HTTP Port"  , "8001", Abstract::TYPE_UINT16);
         globalArguments->addCommandLineOption("HTTP Options", '4', "ipv4" , "Use only IPv4"  , "true", Abstract::TYPE_BOOL);
         globalArguments->addCommandLineOption("HTTP Options", 'a', "laddr" , "Listen Address"  , "*", Abstract::TYPE_STRING);
         globalArguments->addCommandLineOption("HTTP Options", 't', "threads" , "Max Concurrent Connections (Threads)"  , "1024", Abstract::TYPE_UINT16);
+
+        globalArguments->addCommandLineOption("HTTP Security", 'u', "user" , "HTTP User"  , "", Abstract::TYPE_STRING);
+        globalArguments->addCommandLineOption("HTTP Security", 'p', "pass" , "HTTP Pass"  , "", Abstract::TYPE_STRING);
+
 #ifdef WITH_SSL_SUPPORT
         globalArguments->addCommandLineOption("TLS Options", 'k', "keyfile" , "X.509 Private Key Path (if not defined, then HTTP)"  , "", Abstract::TYPE_STRING);
         globalArguments->addCommandLineOption("TLS Options", 'c', "certfile" , "X.509 Certificate Path (if not defined, then HTTP)"  , "", Abstract::TYPE_STRING);
@@ -84,6 +88,8 @@ public:
         rpcLog->setUsingPrintDate(true);
         rpcLog->setModuleAlignSize(36);
 
+        user = globalArguments->getCommandLineOptionValue("user")->toString();
+        pass  = globalArguments->getCommandLineOptionValue("pass")->toString();
 
 
         listenAddress         = globalArguments->getCommandLineOptionValue("laddr")->toString();
@@ -93,7 +99,7 @@ public:
         auto configThreads    = (Memory::Abstract::UINT16 *)globalArguments->getCommandLineOptionValue("threads");
 #ifdef WITH_SSL_SUPPORT
         std::string certfile = globalArguments->getCommandLineOptionValue("certfile")->toString();
-        std::string keyfile  = globalArguments->getCommandLineOptionValue("keyfile")->toString();*/
+        std::string keyfile  = globalArguments->getCommandLineOptionValue("keyfile")->toString();
 #endif
         Network::Sockets::Socket_TCP *socketTCP = new Network::Sockets::Socket_TCP;
 #ifdef WITH_SSL_SUPPORT
@@ -164,6 +170,9 @@ public:
 
     Logs::RPCLog *getRpcLog() const;
 
+    const std::string &getUser() const;
+    const std::string &getPass() const;
+
 private:
     /**
      * callback when connection is fully established (if the callback returns false, connection socket won't be automatically closed/deleted)
@@ -183,6 +192,7 @@ private:
     uint16_t listenPort;
     Logs::AppLog * log;
     Logs::RPCLog * rpcLog;
+    std::string user,pass;
     Network::Sockets::Acceptors::Socket_Acceptor_MultiThreaded multiThreadedAcceptor;
 };
 
@@ -214,6 +224,8 @@ bool USimpleWebServer::_callbackOnConnect(void *obj, Network::Streams::StreamSoc
     webHandler.setResourcesLocalPath(localResourcePath);
     webHandler.setRemotePairAddress(inetAddr);
     webHandler.setRpcLog(webServer->getRpcLog());
+    webHandler.setUser(webServer->getUser());
+    webHandler.setPass(webServer->getPass());
 
     // Handle the Web Client here:
     Memory::Streams::Parsing::ParseErrorMSG err;
@@ -234,6 +246,16 @@ void USimpleWebServer::_callbackOnTimeOut(void *, Network::Streams::StreamSocket
     s->writeString("Connection: close\r\n");
     s->writeString("\r\n");
     s->writeString("<center><h1>503 Service Temporarily Unavailable</h1></center><hr>\r\n");
+}
+
+const std::string &USimpleWebServer::getPass() const
+{
+    return pass;
+}
+
+const std::string &USimpleWebServer::getUser() const
+{
+    return user;
 }
 
 Logs::RPCLog *USimpleWebServer::getRpcLog() const
