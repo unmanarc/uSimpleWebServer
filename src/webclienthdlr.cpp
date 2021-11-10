@@ -6,6 +6,7 @@
 using namespace CX2::Network::HTTP;
 using namespace boost::filesystem;
  using namespace CX2::Memory::Streams;
+
 WebClientHdlr::WebClientHdlr(void *parent, CX2::Memory::Streams::Streamable *sock) : HTTPv1_Server(sock)
 {
 }
@@ -15,11 +16,11 @@ WebClientHdlr::~WebClientHdlr()
 }
 
 
-eHTTP_RetCode WebClientHdlr::processClientRequest()
+Response::StatusCode WebClientHdlr::processClientRequest()
 {
     std::string sRealRelativePath, sRealFullPath;
-    eHTTP_RetCode ret  = HTTP_RET_404_NOT_FOUND;
-    auto reqData = requestData();
+    Response::StatusCode ret  = Response::StatusCode::S_404_NOT_FOUND;
+    auto reqData = getRequestActiveObjects();
 
     if (!pass.empty())
     {
@@ -28,9 +29,9 @@ eHTTP_RetCode WebClientHdlr::processClientRequest()
             getResponseDataStreamer()->writeString("401: Unauthorized.");
             rpcLog->log(CX2::Application::Logs::LEVEL_WARN, remotePairAddress,"","", "", "fileServer", 65535, "R/401: %s",getRequestURI().c_str());
 
-            *(responseData().authenticate) = "Authentication Required";
+            *(getResponseActiveObjects().authenticate) = "Authentication Required";
 
-            ret = HTTP_RET_401_UNAUTHORIZED;
+            ret = Response::StatusCode::S_401_UNAUTHORIZED;
             return ret;
         }
     }
@@ -46,22 +47,22 @@ eHTTP_RetCode WebClientHdlr::processClientRequest()
          )
     {
         // Evaluate...
-        ret = HTTP_RET_200_OK;
-        rpcLog->log(CX2::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/%03d: %s",HTTP_Status::getHTTPRetCodeValue(ret),sRealRelativePath.c_str());
-        rpcLog->log(CX2::Application::Logs::LEVEL_DEBUG, remotePairAddress,"","", "", "fileServer", 2048, "R LOCAL/%03d: %s",HTTP_Status::getHTTPRetCodeValue(ret),sRealFullPath.c_str());
+        ret = Response::StatusCode::S_200_OK;
+        rpcLog->log(CX2::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/%03d: %s",Response::Status::getHTTPStatusCodeTranslation(ret),sRealRelativePath.c_str());
+        rpcLog->log(CX2::Application::Logs::LEVEL_DEBUG, remotePairAddress,"","", "", "fileServer", 2048, "R LOCAL/%03d: %s",Response::Status::getHTTPStatusCodeTranslation(ret),sRealFullPath.c_str());
     }
     else if (getLocalFilePathFromURI(resourcesLocalPath, &sRealRelativePath, &sRealFullPath, "", &isDir) && isDir)
     {
         if (sRealRelativePath == "") sRealRelativePath = "/";
-        ret = HTTP_RET_200_OK;
+        ret = Response::StatusCode::S_200_OK;
 
-        *(responseData().contentType) = "text/html";
+        *(getResponseActiveObjects().contentType) = "text/html";
 
         getResponseDataStreamer()->writeString("<html>");
         getResponseDataStreamer()->writeString("<body>");
         getResponseDataStreamer()->writeString("<h1>Index of "  + htmlEncode(sRealRelativePath)  + "</h1>\n\n");
 
-        rpcLog->log(CX2::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "D/%03d: %s",HTTP_Status::getHTTPRetCodeValue(ret),sRealRelativePath.c_str());
+        rpcLog->log(CX2::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "D/%03d: %s",Response::Status::getHTTPStatusCodeTranslation(ret),sRealRelativePath.c_str());
         path p (sRealFullPath);
 
         getResponseDataStreamer()->writeString( std::string("[<a href='..'>..</a>]<br><br>\n"));
@@ -93,7 +94,7 @@ eHTTP_RetCode WebClientHdlr::processClientRequest()
         rpcLog->log(CX2::Application::Logs::LEVEL_WARN, remotePairAddress,"","", "", "fileServer", 65535, "R/404: %s",getRequestURI().c_str());
     }
 
-    return HTTP_RET_200_OK;
+    return Response::StatusCode::S_200_OK;
 }
 
 void WebClientHdlr::setUser(const std::string &newUser)
@@ -105,7 +106,6 @@ void WebClientHdlr::setPass(const std::string &newPass)
 {
     pass = newPass;
 }
-
 
 CX2::Application::Logs::RPCLog *WebClientHdlr::getRpcLog() const
 {

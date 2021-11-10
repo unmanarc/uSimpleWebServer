@@ -30,7 +30,7 @@ protected:
      * @brief processClientRequest Process web client request
      * @return http responce code.
      */
-    CX2::Network::HTTP::eHTTP_RetCode processClientRequest() override;
+    CX2::Network::HTTP::Response::StatusCode processClientRequest() override;
 
 private:
     std::string resourcesLocalPath;

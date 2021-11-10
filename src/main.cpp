@@ -21,7 +21,7 @@ using namespace CX2::Application;
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 0
+#define VERSION_PATCH 1
 
 
 #ifdef _WIN32
