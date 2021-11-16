@@ -21,7 +21,7 @@ using namespace CX2::Application;
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 2
+#define VERSION_PATCH 3
 
 
 #ifdef _WIN32
@@ -51,19 +51,22 @@ public:
         srand(((time.tv_sec * 1000) + (time.tv_usec / 1000))*getpid());
 
         globalArguments->setVersion( VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, "alpha" );
-        version = globalArguments->getVersion();
+
+        webClientParameters.softwareVersion = globalArguments->getVersion();
         globalArguments->setLicense("AGPL");
         globalArguments->setAuthor("Aarón Mizrachi");
         globalArguments->setEmail("aaron@unmanarc.com");
         globalArguments->setDescription(std::string("Unmanarc's HTTP Server"));
 
-        globalArguments->addCommandLineOption("HTTP Options", 'x', "execute" ,
+        globalArguments->addCommandLineOption("Server Options", 'x', "execute" ,
 #ifndef _WIN32
-                                              "Execute any eXecutable marked file and get the output",
+                                              "Execute any eXecutable marked file and get the output, ATT: disable targz if you want to keep your script sources private",
 #else
-                                              "Execute any .exe/.bat file and get the output",
+                                              "Execute any .exe/.bat file and get the output, ATT: disable targz if you want to keep your script sources private",
 #endif
                                               "false", Abstract::TYPE_BOOL );
+
+        globalArguments->addCommandLineOption("Server Options", 'g', "targz" , "Allow to get server directories as tar.gz files (on-the-fly)"  , "false", Abstract::TYPE_BOOL );
 
         globalArguments->addCommandLineOption("HTTP Options", 'r', "rootdir" , "HTTP Document Root Directory"  , ".", Abstract::TYPE_STRING );
         globalArguments->addCommandLineOption("HTTP Options", 'l', "lport" , "Local HTTP Port"  , "8001", Abstract::TYPE_UINT16);
@@ -94,14 +97,13 @@ public:
         log->setUsingPrintDate(configUseFancy);
         log->setModuleAlignSize(36);
 
-        rpcLog = new Logs::RPCLog();
-        rpcLog->setPrintEmptyFields(false);
-        rpcLog->setUserAlignSize(1);
-        rpcLog->setUsingAttributeName(false);
-        rpcLog->setUsingColors(configUseFancy);
-        rpcLog->setUsingPrintDate(configUseFancy);
-        rpcLog->setModuleAlignSize(36);
-
+        webClientParameters.rpcLog = new Logs::RPCLog();
+        webClientParameters.rpcLog->setPrintEmptyFields(false);
+        webClientParameters.rpcLog->setUserAlignSize(1);
+        webClientParameters.rpcLog->setUsingAttributeName(false);
+        webClientParameters.rpcLog->setUsingColors(configUseFancy);
+        webClientParameters.rpcLog->setUsingPrintDate(configUseFancy);
+        webClientParameters.rpcLog->setModuleAlignSize(36);
 
         std::string passFile = globalArguments->getCommandLineOptionValue("passfile")->toString();
 
@@ -110,12 +112,12 @@ public:
             std::ifstream file(passFile);
             if (file.is_open()) {
 
-                if (!std::getline(file, user))
+                if (!std::getline(file, webClientParameters.user))
                 {
                     log->log0(__func__,Logs::LEVEL_CRITICAL, "Password File '%s' require at least 2 lines [user/pass)", passFile.c_str());
                     exit(-14);
                 }
-                if (!std::getline(file, pass))
+                if (!std::getline(file, webClientParameters.pass))
                 {
                     log->log0(__func__,Logs::LEVEL_CRITICAL, "Password File '%s' require at least 2 lines (user/pass]", passFile.c_str());
                     exit(-15);
@@ -130,9 +132,11 @@ public:
         }
 
         listenAddress         = globalArguments->getCommandLineOptionValue("laddr")->toString();
-        httpDocumentRootDir   = globalArguments->getCommandLineOptionValue("rootdir")->toString();
+        webClientParameters.httpDocumentRootDir   = globalArguments->getCommandLineOptionValue("rootdir")->toString();
         listenPort            = ((Memory::Abstract::UINT16 *)globalArguments->getCommandLineOptionValue("lport"))->getValue();
-        execute               = ((Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("execute"))->getValue();
+        webClientParameters.execute = ((Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("execute"))->getValue();
+        webClientParameters.targz = ((Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("targz"))->getValue();
+
         auto configUseIPv4    = (Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("ipv4");
         auto configThreads    = (Memory::Abstract::UINT16 *)globalArguments->getCommandLineOptionValue("threads");
 #ifdef WITH_SSL_SUPPORT
@@ -186,7 +190,7 @@ public:
 
     int _start(int argc, char *argv[], Arguments::GlobalArguments * globalArguments)
     {
-        auto rp = realpath(httpDocumentRootDir.c_str(), nullptr);
+        auto rp = realpath(webClientParameters.httpDocumentRootDir.c_str(), nullptr);
 
         if (!rp)
         {
@@ -201,20 +205,7 @@ public:
         return 0;
     }
 
-
-    const std::string &getDocumentRootPath() const;
-
-    const std::string &getRemoteIP() const;
-    void setRemoteIP(const std::string &newRemoteIP);
-
-    Logs::RPCLog *getRpcLog() const;
-
-    const std::string &getUser() const;
-    const std::string &getPass() const;
-
-    bool getExecute() const;
-
-    const std::string &getVersion() const;
+    const webClientParams &getWebClientParameters() const;
 
 private:
     /**
@@ -230,14 +221,11 @@ private:
      */
     static void _callbackOnTimeOut(void *, Network::Streams::StreamSocket *, const char *, bool);
 
-    std::string httpDocumentRootDir;
     std::string listenAddress;
-    bool execute;
     uint16_t listenPort;
-    Logs::AppLog * log;
-    Logs::RPCLog * rpcLog;
-    std::string user,pass;
-    std::string version;
+    Logs::AppLog * log;   
+    webClientParams webClientParameters;
+
     Network::Sockets::Acceptors::Socket_Acceptor_MultiThreaded multiThreadedAcceptor;
 };
 
@@ -263,16 +251,11 @@ bool USimpleWebServer::_callbackOnConnect(void *obj, Network::Streams::StreamSoc
     char inetAddr[INET6_ADDRSTRLEN];
     s->getRemotePair(inetAddr);
 
-    auto localResourcePath = webServer->getDocumentRootPath();
+
 
     webHandler.setIsSecure(isSecure);
-    webHandler.setResourcesLocalPath(localResourcePath);
     webHandler.setRemotePairAddress(inetAddr);
-    webHandler.setRpcLog(webServer->getRpcLog());
-    webHandler.setUser(webServer->getUser());
-    webHandler.setPass(webServer->getPass());
-    webHandler.setExecute(webServer->getExecute());
-    webHandler.setSoftwareVersion(webServer->getVersion());
+    webHandler.setWebClientParameters(webServer->getWebClientParameters());
 
     // Handle the Web Client here:
     Memory::Streams::Parsing::ParseErrorMSG err;
@@ -295,34 +278,9 @@ void USimpleWebServer::_callbackOnTimeOut(void *, Network::Streams::StreamSocket
     s->writeString("<center><h1>503 Service Temporarily Unavailable</h1></center><hr>\r\n");
 }
 
-const std::string &USimpleWebServer::getVersion() const
+const webClientParams &USimpleWebServer::getWebClientParameters() const
 {
-    return version;
-}
-
-bool USimpleWebServer::getExecute() const
-{
-    return execute;
-}
-
-const std::string &USimpleWebServer::getPass() const
-{
-    return pass;
-}
-
-const std::string &USimpleWebServer::getUser() const
-{
-    return user;
-}
-
-Logs::RPCLog *USimpleWebServer::getRpcLog() const
-{
-    return rpcLog;
-}
-
-const std::string &USimpleWebServer::getDocumentRootPath() const
-{
-    return httpDocumentRootDir;
+    return webClientParameters;
 }
 
 int main(int argc, char *argv[])
