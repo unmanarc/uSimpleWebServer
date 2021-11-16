@@ -99,7 +99,7 @@ Response::StatusCode WebClientHdlr::processClientRequest()
 
         auto * vars = getRequestVars(CX2::Network::HTTP::HTTP_VarSource::HTTP_VARS_GET);
 
-        if (vars->getStringValue("action") == "targz")
+        if (vars->getStringValue("action") == "targz" && webClientParameters.targz)
         {
             webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/TARGZ-DIR,%03d: %s",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealRelativePath.c_str());
             generateTarGz(fileInfo);
