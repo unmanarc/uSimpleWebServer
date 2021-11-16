@@ -25,6 +25,12 @@ public:
 
     void setUser(const std::string &newUser);
 
+
+
+    void setExecute(bool newExecute);
+
+    void setSoftwareVersion(const std::string &newSoftwareVersion);
+
 protected:
     /**
      * @brief processClientRequest Process web client request
@@ -33,6 +39,11 @@ protected:
     CX2::Network::HTTP::Response::StatusCode processClientRequest() override;
 
 private:
+
+    std::string getFancySize(size_t  size);
+
+    bool execute;
+    std::string softwareVersion;
     std::string resourcesLocalPath;
     CX2::Application::Logs::RPCLog * rpcLog;
     std::string user,pass;

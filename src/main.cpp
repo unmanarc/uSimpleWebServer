@@ -21,7 +21,7 @@ using namespace CX2::Application;
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_PATCH 1
+#define VERSION_PATCH 2
 
 
 #ifdef _WIN32
@@ -51,12 +51,21 @@ public:
         srand(((time.tv_sec * 1000) + (time.tv_usec / 1000))*getpid());
 
         globalArguments->setVersion( VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, "alpha" );
+        version = globalArguments->getVersion();
         globalArguments->setLicense("AGPL");
         globalArguments->setAuthor("Aarón Mizrachi");
         globalArguments->setEmail("aaron@unmanarc.com");
         globalArguments->setDescription(std::string("Unmanarc's HTTP Server"));
 
-        globalArguments->addCommandLineOption("HTTP Options", 'x', "xdir" , "HTTP Document Root Directory"  , ".", Abstract::TYPE_STRING );
+        globalArguments->addCommandLineOption("HTTP Options", 'x', "execute" ,
+#ifndef _WIN32
+                                              "Execute any eXecutable marked file and get the output",
+#else
+                                              "Execute any .exe/.bat file and get the output",
+#endif
+                                              "false", Abstract::TYPE_BOOL );
+
+        globalArguments->addCommandLineOption("HTTP Options", 'r', "rootdir" , "HTTP Document Root Directory"  , ".", Abstract::TYPE_STRING );
         globalArguments->addCommandLineOption("HTTP Options", 'l', "lport" , "Local HTTP Port"  , "8001", Abstract::TYPE_UINT16);
         globalArguments->addCommandLineOption("HTTP Options", '4', "ipv4" , "Use only IPv4"  , "true", Abstract::TYPE_BOOL);
         globalArguments->addCommandLineOption("HTTP Options", 'a', "laddr" , "Listen Address"  , "*", Abstract::TYPE_STRING);
@@ -65,7 +74,6 @@ public:
         globalArguments->addCommandLineOption("HTTP Security", 'p', "passfile" , "HTTP User/Pass File"  , "", Abstract::TYPE_STRING);
 
         globalArguments->addCommandLineOption("Application", 's', "sys" , "Sys Log Mode (don't be fancy, compatible with systemctl)"  , "false", Abstract::TYPE_BOOL);
-
 
 #ifdef WITH_SSL_SUPPORT
         globalArguments->addCommandLineOption("TLS Options", 'k', "keyfile" , "X.509 Private Key Path (if not defined, then HTTP)"  , "", Abstract::TYPE_STRING);
@@ -122,8 +130,9 @@ public:
         }
 
         listenAddress         = globalArguments->getCommandLineOptionValue("laddr")->toString();
-        httpDocumentRootDir   = globalArguments->getCommandLineOptionValue("xdir")->toString();
+        httpDocumentRootDir   = globalArguments->getCommandLineOptionValue("rootdir")->toString();
         listenPort            = ((Memory::Abstract::UINT16 *)globalArguments->getCommandLineOptionValue("lport"))->getValue();
+        execute               = ((Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("execute"))->getValue();
         auto configUseIPv4    = (Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("ipv4");
         auto configThreads    = (Memory::Abstract::UINT16 *)globalArguments->getCommandLineOptionValue("threads");
 #ifdef WITH_SSL_SUPPORT
@@ -177,7 +186,6 @@ public:
 
     int _start(int argc, char *argv[], Arguments::GlobalArguments * globalArguments)
     {
-        multiThreadedAcceptor.startThreaded();
         auto rp = realpath(httpDocumentRootDir.c_str(), nullptr);
 
         if (!rp)
@@ -185,12 +193,14 @@ public:
             log->log0(__func__,Logs::LEVEL_CRITICAL, "Invalid Document Root Directory.");
             exit(-1);
         }
+        multiThreadedAcceptor.startThreaded();
 
         log->log0(__func__,Logs::LEVEL_INFO, "Web Server Loaded @%s:%d", listenAddress.c_str(),listenPort);
         log->log0(__func__,Logs::LEVEL_INFO, "Document root: %s", rp);
 
         return 0;
     }
+
 
     const std::string &getDocumentRootPath() const;
 
@@ -201,6 +211,10 @@ public:
 
     const std::string &getUser() const;
     const std::string &getPass() const;
+
+    bool getExecute() const;
+
+    const std::string &getVersion() const;
 
 private:
     /**
@@ -218,10 +232,12 @@ private:
 
     std::string httpDocumentRootDir;
     std::string listenAddress;
+    bool execute;
     uint16_t listenPort;
     Logs::AppLog * log;
     Logs::RPCLog * rpcLog;
     std::string user,pass;
+    std::string version;
     Network::Sockets::Acceptors::Socket_Acceptor_MultiThreaded multiThreadedAcceptor;
 };
 
@@ -255,6 +271,8 @@ bool USimpleWebServer::_callbackOnConnect(void *obj, Network::Streams::StreamSoc
     webHandler.setRpcLog(webServer->getRpcLog());
     webHandler.setUser(webServer->getUser());
     webHandler.setPass(webServer->getPass());
+    webHandler.setExecute(webServer->getExecute());
+    webHandler.setSoftwareVersion(webServer->getVersion());
 
     // Handle the Web Client here:
     Memory::Streams::Parsing::ParseErrorMSG err;
@@ -275,6 +293,16 @@ void USimpleWebServer::_callbackOnTimeOut(void *, Network::Streams::StreamSocket
     s->writeString("Connection: close\r\n");
     s->writeString("\r\n");
     s->writeString("<center><h1>503 Service Temporarily Unavailable</h1></center><hr>\r\n");
+}
+
+const std::string &USimpleWebServer::getVersion() const
+{
+    return version;
+}
+
+bool USimpleWebServer::getExecute() const
+{
+    return execute;
 }
 
 const std::string &USimpleWebServer::getPass() const
