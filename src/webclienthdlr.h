@@ -14,6 +14,7 @@ struct webClientParams
         targz = false;
     }
 
+    CX2::Memory::Containers::B_MEM * favicon;
     bool execute,targz;
     std::string softwareVersion;
     std::string httpDocumentRootDir;

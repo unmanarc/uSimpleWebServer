@@ -14,6 +14,8 @@
 #include <fstream>
 
 #include "webclienthdlr.h"
+#include "favicon.h"
+
 
 using namespace CX2;
 using namespace CX2::Memory;
@@ -44,6 +46,8 @@ public:
     void _initvars(int argc, char *argv[], Arguments::GlobalArguments * globalArguments)
     {
         globalArguments->setInifiniteWaitAtEnd(true);
+
+        webClientParameters.favicon = new CX2::Memory::Containers::B_MEM(favicon2_ico,favicon2_ico_len);
 
         /////////////////////////
         struct timeval time;
@@ -247,11 +251,10 @@ bool USimpleWebServer::_callbackOnConnect(void *obj, Network::Streams::StreamSoc
     // Prepare the web services handler.
     WebClientHdlr webHandler(nullptr,s);
 
+    webHandler.addStaticContent("/favicon.ico",webServer->getWebClientParameters().favicon);
 
     char inetAddr[INET6_ADDRSTRLEN];
     s->getRemotePair(inetAddr);
-
-
 
     webHandler.setIsSecure(isSecure);
     webHandler.setRemotePairAddress(inetAddr);
