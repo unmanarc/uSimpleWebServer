@@ -47,10 +47,10 @@ Response::StatusCode WebClientHdlr::processClientRequest()
     }
 
     //////////////////////////////////////////////////////////////////////////
-    if ((   getLocalFilePathFromURI2(webClientParameters.httpDocumentRootDir, &fileInfo, "",webClientParameters.execute) ||
-            getLocalFilePathFromURI2(webClientParameters.httpDocumentRootDir, &fileInfo, ".html",webClientParameters.execute) ||
-            getLocalFilePathFromURI2(webClientParameters.httpDocumentRootDir, &fileInfo, "index.html",webClientParameters.execute) ||
-            getLocalFilePathFromURI2(webClientParameters.httpDocumentRootDir, &fileInfo, "/index.html",webClientParameters.execute)
+    if ((       getLocalFilePathFromURI2(webClientParameters.httpDocumentRootDir, &fileInfo, ".html",webClientParameters.execute) ||
+                getLocalFilePathFromURI2(webClientParameters.httpDocumentRootDir, &fileInfo, "index.html",webClientParameters.execute) ||
+                getLocalFilePathFromURI2(webClientParameters.httpDocumentRootDir, &fileInfo, "/index.html",webClientParameters.execute) ||
+                getLocalFilePathFromURI2(webClientParameters.httpDocumentRootDir, &fileInfo, "",webClientParameters.execute)
             ) && !fileInfo.isDir)
     {
         // Evaluate...
