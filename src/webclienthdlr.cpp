@@ -255,7 +255,7 @@ void WebClientHdlr::generateIndexOf(const sLocalRequestedFileInfo & fileInfo)
                         "            <td>%s<a href='%s'>%s</a>%s</td>\n"
                         "            <td>%s</td>\n"
                         "            <td>%s</td>\n"
-                        "            <td>%lu:%lu</td>\n"
+                        "            <td>%u:%u</td>\n"
                         "            <td>%s</td>\n"
                         "        </tr>\n",
                         S_ISDIR(stats.st_mode)?"<div class=folder16>[":"<div class=file16>",
@@ -268,9 +268,6 @@ void WebClientHdlr::generateIndexOf(const sLocalRequestedFileInfo & fileInfo)
                         stats.st_gid,
                         chmodval
                         );
-
-
-
         }
         closedir(dirp);
         getResponseDataStreamer()->writeString("    </table>\n");
