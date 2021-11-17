@@ -76,7 +76,7 @@ public:
 
         globalArguments->addCommandLineOption("HTTP Security", 'p', "passfile" , "HTTP User/Pass File"  , "", Abstract::TYPE_STRING);
 
-        globalArguments->addCommandLineOption("Application", 's', "sys" , "Sys Log Mode (don't be fancy, compatible with systemctl)"  , "false", Abstract::TYPE_BOOL);
+        globalArguments->addCommandLineOption("Other Options", 's', "sys" , "Journalctl Log Mode (don't print colors or dates)"  , "false", Abstract::TYPE_BOOL);
 
 #ifdef WITH_SSL_SUPPORT
         globalArguments->addCommandLineOption("TLS Options", 'k', "keyfile" , "X.509 Private Key Path (if not defined, then HTTP)"  , "", Abstract::TYPE_STRING);
