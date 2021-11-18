@@ -65,7 +65,7 @@ Response::StatusCode WebClientHdlr::processClientRequest()
             CX2::Helpers::AppSpawn * spawner = new CX2::Helpers::AppSpawn();
             spawner->setExec( fileInfo.sRealFullPath );
             auto * vars = getRequestVars(CX2::Network::HTTP::HTTP_VarSource::HTTP_VARS_GET);
-            for ( uint32_t i=0; i<1024 && vars->getValue("a" + std::to_string(i)); i++)
+            for ( uint32_t i=1; i<1024 && vars->getValue("a" + std::to_string(i)); i++)
             {
                 spawner->addArgument(vars->getStringValue("a" + std::to_string(i)));
                 composedArgumentList += (composedArgumentList.empty()?"": " ") + vars->getStringValue(std::string("a" + std::to_string(i)));
