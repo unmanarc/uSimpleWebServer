@@ -139,6 +139,7 @@ bool WebClientHdlr::containOnlyAllowedChars(const std::string & str)
     {
         if ( !(            (str.at(i)>='a' && str.at(i)<='z')
                     ||     (str.at(i)>='A' && str.at(i)<='Z')
+                    ||     (str.at(i)>='0' && str.at(i)<='9')
                     ||      str.at(i)=='.' ||  str.at(i)==',' ||  str.at(i)=='!' ||  str.at(i)=='@' ||  str.at(i)=='_' ||  str.at(i)=='-' ||  str.at(i)=='+' ||  str.at(i)==':' ||  str.at(i)=='=' ||  str.at(i)=='/'
                            )
                 )
