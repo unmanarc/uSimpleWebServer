@@ -1,10 +1,8 @@
 #include "webclienthdlr.h"
 #include <cx2_mem_vars/b_mmap.h>
-#include <boost/filesystem.hpp>
 #include <cx2_netp_http/streamencoder_url.h>
 #include <cx2_hlp_functions/appexec.h>
 #include <cx2_mem_vars/streamableprocess.h>
-
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <dirent.h>
@@ -14,7 +12,6 @@
 #include <sys/stat.h>
 
 using namespace CX2::Network::HTTP;
-using namespace boost::filesystem;
 using namespace CX2::Memory::Streams;
 
 WebClientHdlr::WebClientHdlr(void *parent, CX2::Memory::Streams::Streamable *sock) : HTTPv1_Server(sock)
@@ -61,28 +58,38 @@ Response::StatusCode WebClientHdlr::processClientRequest()
             // Execute...
             ret = Response::StatusCode::S_200_OK;
 
-            std::string composedArgumentList;
+            std::string composedArgumentList, composedEnviromentList;
             CX2::Helpers::AppSpawn * spawner = new CX2::Helpers::AppSpawn();
             spawner->setExec( fileInfo.sRealFullPath );
-            auto * vars = getRequestVars(CX2::Network::HTTP::HTTP_VarSource::HTTP_VARS_GET);
-            for ( uint32_t i=1; i<1024 && vars->getValue("a" + std::to_string(i)); i++)
+
+            spawner->addEnvironment(std::string("REMOTE_ADDR=") + remotePairAddress);
+
+            auto * postVars = getRequestVars(CX2::Network::HTTP::HTTP_VarSource::HTTP_VARS_POST);
+            for (const auto & key : postVars->getKeysList())
             {
-                spawner->addArgument(vars->getStringValue("a" + std::to_string(i)));
-                composedArgumentList += (composedArgumentList.empty()?"": " ") + vars->getStringValue(std::string("a" + std::to_string(i)));
+                // Security: Don't insert dangerous chars... (it should allow base64, emails, etc)
+                if (!containOnlyAllowedChars(key) || !containOnlyAllowedChars(postVars->getStringValue(key))) continue;
+
+                spawner->addEnvironment("POST_" + key + "=" + postVars->getStringValue(key));
+                composedEnviromentList += (composedEnviromentList.empty()?"": " ") + std::string("POST_") + key;
             }
 
+            auto * getVars = getRequestVars(CX2::Network::HTTP::HTTP_VarSource::HTTP_VARS_GET);
+            for ( uint32_t i=1; i<1024 && getVars->getValue("a" + std::to_string(i)); i++)
+            {
+                spawner->addArgument(getVars->getStringValue("a" + std::to_string(i)));
+                composedArgumentList += (composedArgumentList.empty()?"": " ") + getVars->getStringValue(std::string("a" + std::to_string(i)));
+            }
 
-            webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_DEBUG, remotePairAddress,"","", "", "fileServer", 2048, "R/D-EXEC,%03d: %s (args: %s)",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealFullPath.c_str(), composedArgumentList.c_str());
+            webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_DEBUG, remotePairAddress,"","", "", "fileServer", 2048, "R/D-EXEC,%03d: %s (args: %s, env: %s)",
+                                            Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealFullPath.c_str(), composedArgumentList.c_str(), composedEnviromentList.c_str());
             if (spawner->spawnProcess(true,false))
             {
-                webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/EXEC-OK,%03d: %s (args: %s)",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealRelativePath.c_str(), composedArgumentList.c_str());
+                webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/EXEC-OK,%03d: %s (args: %s, env: %s)",
+                                                Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealRelativePath.c_str(), composedArgumentList.c_str(), composedEnviromentList.c_str());
                 CX2::Memory::Streams::StreamableProcess * streamableP = new CX2::Memory::Streams::StreamableProcess(spawner);
                 this->setResponseDataStreamer(streamableP,true);
-
-                if ( boost::iends_with(fileInfo.sRealFullPath,".bin") )
-                {
-                    *(getResponseActiveObjects().contentType) = "application/octet-stream";
-                }
+                setResponseContentTypeByFileExtension(fileInfo.sRealRelativePath);
             }
             else
             {
@@ -124,6 +131,23 @@ Response::StatusCode WebClientHdlr::processClientRequest()
     }
 
     return Response::StatusCode::S_200_OK;
+}
+
+bool WebClientHdlr::containOnlyAllowedChars(const std::string & str)
+{
+    for (ssize_t i=0;i<str.size();i++)
+    {
+        if ( !(            (str.at(i)>='a' && str.at(i)<='z')
+                    ||     (str.at(i)>='A' && str.at(i)<='Z')
+                    ||      str.at(i)=='.' ||  str.at(i)==',' ||  str.at(i)=='!' ||  str.at(i)=='@' ||  str.at(i)=='_' ||  str.at(i)=='-' ||  str.at(i)=='+' ||  str.at(i)==':' ||  str.at(i)=='=' ||  str.at(i)=='/'
+                           )
+                )
+        {
+            return false;
+        }
+    }
+    return true;
+
 }
 void WebClientHdlr::generateTarGz(const CX2::Network::HTTP::sLocalRequestedFileInfo &fileInfo)
 {

@@ -38,7 +38,7 @@ protected:
     CX2::Network::HTTP::Response::StatusCode processClientRequest() override;
 
 private:
-
+    bool containOnlyAllowedChars(const std::string &str);
     void generateIndexOf(const CX2::Network::HTTP::sLocalRequestedFileInfo &fileInfo);
     void generateTarGz(const CX2::Network::HTTP::sLocalRequestedFileInfo &fileInfo);
 
