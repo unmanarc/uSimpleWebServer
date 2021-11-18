@@ -71,10 +71,6 @@ Response::StatusCode WebClientHdlr::processClientRequest()
                 composedArgumentList += (composedArgumentList.empty()?"": " ") + vars->getStringValue(std::string("a" + std::to_string(i)));
             }
 
-            if ( boost::iends_with(fileInfo.sRealFullPath,".bin") )
-            {
-                *(getResponseActiveObjects().contentType) = "application/octet-stream";
-            }
 
             webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_DEBUG, remotePairAddress,"","", "", "fileServer", 2048, "R/D-EXEC,%03d: %s (args: %s)",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealFullPath.c_str(), composedArgumentList.c_str());
             if (spawner->spawnProcess(true,false))
@@ -82,6 +78,11 @@ Response::StatusCode WebClientHdlr::processClientRequest()
                 webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/EXEC-OK,%03d: %s (args: %s)",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealRelativePath.c_str(), composedArgumentList.c_str());
                 CX2::Memory::Streams::StreamableProcess * streamableP = new CX2::Memory::Streams::StreamableProcess(spawner);
                 this->setResponseDataStreamer(streamableP,true);
+
+                if ( boost::iends_with(fileInfo.sRealFullPath,".bin") )
+                {
+                    *(getResponseActiveObjects().contentType) = "application/octet-stream";
+                }
             }
             else
             {
