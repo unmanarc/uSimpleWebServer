@@ -38,7 +38,7 @@ and then...
 ```
 git clone https://github.com/unmanarc/uSimpleWebServer
 cd uSimpleWebServer
-cmake3 . -DPORTABLE=ON -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_INSTALL_PREFIX:PATH=/opt/osslibs -DEXTRAPREFIX:PATH=/opt/osslibs -DCENTOS7SUPPORT=ON -B../uSimpleWebServer-build
+cmake3 . -DPORTABLE=ON -DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_INSTALL_PREFIX:PATH=/opt/osslibs -DEXTRAPREFIX:PATH=/opt/osslibs -B../uSimpleWebServer-build
 cd ../uSimpleWebServer-build
 make -j4 install
 ```
