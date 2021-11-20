@@ -90,7 +90,9 @@ public:
 
     bool _config(int argc, char *argv[], Arguments::GlobalArguments * globalArguments)
     {
-
+#ifdef WITH_SSL_SUPPORT
+        CX2::Network::TLS::Socket_TLS::prepareTLS();
+#endif
         bool configUseFancy    = !((Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("sys"))->getValue();
 
         log = new Logs::AppLog();
