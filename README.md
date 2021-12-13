@@ -50,7 +50,7 @@ strip -x -X -s /opt/osslibs/bin/uSimpleWebServer
 upx -9 --ultra-brute /opt/osslibs/bin/uSimpleWebServer
 ```
 
-The resulting expected binary size should be: **159K** without https support (yes, it's still a dinosaur, but at least it will fit in your 5 1/4 floppy disk)
+The resulting expected binary size should be: **~200K** without https support (yes, it's still a dinosaur, but at least it will fit in your 5 1/4 floppy disk)
 
 
 ### Running Instructions:
