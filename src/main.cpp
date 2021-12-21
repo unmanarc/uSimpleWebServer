@@ -15,15 +15,12 @@
 
 #include "webclienthdlr.h"
 #include "favicon.h"
+#include "config.h"
 
 
 using namespace CX2;
 using namespace CX2::Memory;
 using namespace CX2::Application;
-
-#define VERSION_MAJOR 1
-#define VERSION_MINOR 0
-#define VERSION_PATCH 4
 
 
 #ifdef _WIN32
@@ -54,7 +51,7 @@ public:
         gettimeofday(&time,nullptr);
         srand(((time.tv_sec * 1000) + (time.tv_usec / 1000))*getpid());
 
-        globalArguments->setVersion( VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH, "alpha" );
+        globalArguments->setVersion( atoi(PROJECT_VER_MAJOR), atoi(PROJECT_VER_MINOR), atoi(PROJECT_VER_PATCH), "a" );
 
         webClientParameters.softwareVersion = globalArguments->getVersion();
         globalArguments->setLicense("AGPL");

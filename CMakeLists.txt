@@ -8,6 +8,8 @@ project(${PROJECT_NAME} VERSION ${SVERSION} DESCRIPTION "Unmanarcs Simple Web Se
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
 
+configure_file(src/config.h.in ${${APP_NAME}_SOURCE_DIR}/src/config.h)
+
 file(GLOB_RECURSE EDV_INCLUDE_FILES "src/*.h*")
 file(GLOB_RECURSE EDV_SOURCE_FILES "src/*.c*")
 
