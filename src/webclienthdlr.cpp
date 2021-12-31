@@ -1,8 +1,8 @@
 #include "webclienthdlr.h"
-#include <cx2_mem_vars/b_mmap.h>
-#include <cx2_netp_http/streamencoder_url.h>
-#include <cx2_hlp_functions/appexec.h>
-#include <cx2_mem_vars/streamableprocess.h>
+#include <mdz_mem_vars/b_mmap.h>
+#include <mdz_proto_http/streamencoder_url.h>
+#include <mdz_hlp_functions/appexec.h>
+#include <mdz_mem_vars/streamableprocess.h>
 #include <boost/algorithm/string/predicate.hpp>
 
 #include <dirent.h>
@@ -11,10 +11,10 @@
 #include <string.h>
 #include <sys/stat.h>
 
-using namespace CX2::Network::HTTP;
-using namespace CX2::Memory::Streams;
+using namespace Mantids::Network::HTTP;
+using namespace Mantids::Memory::Streams;
 
-WebClientHdlr::WebClientHdlr(void *parent, CX2::Memory::Streams::Streamable *sock) : HTTPv1_Server(sock)
+WebClientHdlr::WebClientHdlr(void *parent, Mantids::Memory::Streams::Streamable *sock) : HTTPv1_Server(sock)
 {
 }
 
@@ -35,7 +35,7 @@ Response::StatusCode WebClientHdlr::processClientRequest()
         if (reqData.AUTH_PASS != webClientParameters.pass || reqData.AUTH_USER!= webClientParameters.user)
         {
             getResponseDataStreamer()->writeString("401: Unauthorized.");
-            webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_WARN, remotePairAddress,"","", "", "fileServer", 65535, "R/401: %s",getRequestURI().c_str());
+            webClientParameters.rpcLog->log(Mantids::Application::Logs::LEVEL_WARN, remotePairAddress,"","", "", "fileServer", 65535, "R/401: %s",getRequestURI().c_str());
 
             *(getResponseActiveObjects().authenticate) = "Authentication Required";
 
@@ -59,12 +59,12 @@ Response::StatusCode WebClientHdlr::processClientRequest()
             ret = Response::StatusCode::S_200_OK;
 
             std::string composedArgumentList, composedEnviromentList;
-            CX2::Helpers::AppSpawn * spawner = new CX2::Helpers::AppSpawn();
+            Mantids::Helpers::AppSpawn * spawner = new Mantids::Helpers::AppSpawn();
             spawner->setExec( fileInfo.sRealFullPath );
 
             spawner->addEnvironment(std::string("REMOTE_ADDR=") + remotePairAddress);
 
-            auto * postVars = getRequestVars(CX2::Network::HTTP::HTTP_VarSource::HTTP_VARS_POST);
+            auto * postVars = getRequestVars(Mantids::Network::HTTP::HTTP_VarSource::HTTP_VARS_POST);
             for (const auto & key : postVars->getKeysList())
             {
                 // Security: Don't insert dangerous chars... (it should allow base64, emails, etc)
@@ -74,34 +74,34 @@ Response::StatusCode WebClientHdlr::processClientRequest()
                 composedEnviromentList += (composedEnviromentList.empty()?"": " ") + std::string("POST_") + key;
             }
 
-            auto * getVars = getRequestVars(CX2::Network::HTTP::HTTP_VarSource::HTTP_VARS_GET);
+            auto * getVars = getRequestVars(Mantids::Network::HTTP::HTTP_VarSource::HTTP_VARS_GET);
             for ( uint32_t i=1; i<1024 && getVars->getValue("a" + std::to_string(i)); i++)
             {
                 spawner->addArgument(getVars->getStringValue("a" + std::to_string(i)));
                 composedArgumentList += (composedArgumentList.empty()?"": " ") + getVars->getStringValue(std::string("a" + std::to_string(i)));
             }
 
-            webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_DEBUG, remotePairAddress,"","", "", "fileServer", 2048, "R/D-EXEC,%03d: %s (args: %s, env: %s)",
+            webClientParameters.rpcLog->log(Mantids::Application::Logs::LEVEL_DEBUG, remotePairAddress,"","", "", "fileServer", 2048, "R/D-EXEC,%03d: %s (args: %s, env: %s)",
                                             Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealFullPath.c_str(), composedArgumentList.c_str(), composedEnviromentList.c_str());
             if (spawner->spawnProcess(true,false))
             {
-                webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/EXEC-OK,%03d: %s (args: %s, env: %s)",
+                webClientParameters.rpcLog->log(Mantids::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/EXEC-OK,%03d: %s (args: %s, env: %s)",
                                                 Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealRelativePath.c_str(), composedArgumentList.c_str(), composedEnviromentList.c_str());
-                CX2::Memory::Streams::StreamableProcess * streamableP = new CX2::Memory::Streams::StreamableProcess(spawner);
+                Mantids::Memory::Streams::StreamableProcess * streamableP = new Mantids::Memory::Streams::StreamableProcess(spawner);
                 this->setResponseDataStreamer(streamableP,true);
                 setResponseContentTypeByFileExtension(fileInfo.sRealRelativePath);
             }
             else
             {
-                webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_WARN, remotePairAddress,"", "","",  "fileServer", 2048, "R/EXEC-FAIL,%03d: %s (args: %s)",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealRelativePath.c_str(), composedArgumentList.c_str());
+                webClientParameters.rpcLog->log(Mantids::Application::Logs::LEVEL_WARN, remotePairAddress,"", "","",  "fileServer", 2048, "R/EXEC-FAIL,%03d: %s (args: %s)",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealRelativePath.c_str(), composedArgumentList.c_str());
             }
         }
         else
         {
             //Serve as it comes...
             ret = Response::StatusCode::S_200_OK;
-            webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/%03d: %s",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealRelativePath.c_str());
-            webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_DEBUG, remotePairAddress,"","", "", "fileServer", 2048, "R/D-LOCAL,%03d: %s",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealFullPath.c_str());
+            webClientParameters.rpcLog->log(Mantids::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/%03d: %s",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealRelativePath.c_str());
+            webClientParameters.rpcLog->log(Mantids::Application::Logs::LEVEL_DEBUG, remotePairAddress,"","", "", "fileServer", 2048, "R/D-LOCAL,%03d: %s",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealFullPath.c_str());
         }
 
 
@@ -111,23 +111,23 @@ Response::StatusCode WebClientHdlr::processClientRequest()
         if (fileInfo.sRealRelativePath == "") fileInfo.sRealRelativePath = "/";
         ret = Response::StatusCode::S_200_OK;
 
-        auto * vars = getRequestVars(CX2::Network::HTTP::HTTP_VarSource::HTTP_VARS_GET);
+        auto * vars = getRequestVars(Mantids::Network::HTTP::HTTP_VarSource::HTTP_VARS_GET);
 
         if (vars->getStringValue("action") == "targz" && webClientParameters.targz)
         {
-            webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/TARGZ-DIR,%03d: %s",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealRelativePath.c_str());
+            webClientParameters.rpcLog->log(Mantids::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/TARGZ-DIR,%03d: %s",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealRelativePath.c_str());
             generateTarGz(fileInfo);
         }
         else
         {
-            webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/DIR,%03d: %s",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealRelativePath.c_str());
+            webClientParameters.rpcLog->log(Mantids::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/DIR,%03d: %s",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealRelativePath.c_str());
             generateIndexOf(fileInfo);
         }
     }
     else
     {
         getResponseDataStreamer()->writeString("404: Not Found.");
-        webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_WARN, remotePairAddress,"","", "", "fileServer", 65535, "R/404: %s",getRequestURI().c_str());
+        webClientParameters.rpcLog->log(Mantids::Application::Logs::LEVEL_WARN, remotePairAddress,"","", "", "fileServer", 65535, "R/404: %s",getRequestURI().c_str());
     }
 
     return Response::StatusCode::S_200_OK;
@@ -150,12 +150,12 @@ bool WebClientHdlr::containOnlyAllowedChars(const std::string & str)
     return true;
 
 }
-void WebClientHdlr::generateTarGz(const CX2::Network::HTTP::sLocalRequestedFileInfo &fileInfo)
+void WebClientHdlr::generateTarGz(const Mantids::Network::HTTP::sLocalRequestedFileInfo &fileInfo)
 {
     *(getResponseActiveObjects().contentType) = "application/octet-stream";
 
     std::string composedArgumentList;
-    CX2::Helpers::AppSpawn * spawner = new CX2::Helpers::AppSpawn();
+    Mantids::Helpers::AppSpawn * spawner = new Mantids::Helpers::AppSpawn();
 
     spawner->setExec( "/usr/bin/tar" );
     spawner->addArgument( "czf" ); // Compress (gzip), and put in file format.
@@ -164,12 +164,12 @@ void WebClientHdlr::generateTarGz(const CX2::Network::HTTP::sLocalRequestedFileI
 
     if (spawner->spawnProcess(true,false))
     {
-        CX2::Memory::Streams::StreamableProcess * streamableP = new CX2::Memory::Streams::StreamableProcess(spawner);
+        Mantids::Memory::Streams::StreamableProcess * streamableP = new Mantids::Memory::Streams::StreamableProcess(spawner);
         this->setResponseDataStreamer(streamableP,true);
     }
     else
     {
-        webClientParameters.rpcLog->log(CX2::Application::Logs::LEVEL_WARN, remotePairAddress,"", "","",  "fileServer", 2048, "R/EXEC-FAIL: tar czvf");
+        webClientParameters.rpcLog->log(Mantids::Application::Logs::LEVEL_WARN, remotePairAddress,"", "","",  "fileServer", 2048, "R/EXEC-FAIL: tar czvf");
     }
 }
 

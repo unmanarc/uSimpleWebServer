@@ -1,8 +1,8 @@
 #ifndef WEBCLIENTHANDLER_H
 #define WEBCLIENTHANDLER_H
 
-#include <cx2_netp_http/httpv1_server.h>
-#include <cx2_prg_logs/rpclog.h>
+#include <mdz_proto_http/httpv1_server.h>
+#include <mdz_prg_logs/rpclog.h>
 #include <mutex>
 
 struct webClientParams
@@ -14,15 +14,15 @@ struct webClientParams
         targz = false;
     }
 
-    CX2::Memory::Containers::B_MEM * favicon;
+    Mantids::Memory::Containers::B_MEM * favicon;
     bool execute,targz;
     std::string softwareVersion;
     std::string httpDocumentRootDir;
-    CX2::Application::Logs::RPCLog * rpcLog;
+    Mantids::Application::Logs::RPCLog * rpcLog;
     std::string user,pass;
 };
 
-class WebClientHdlr : public CX2::Network::HTTP::HTTPv1_Server
+class WebClientHdlr : public Mantids::Network::HTTP::HTTPv1_Server
 {
 public:
     WebClientHdlr(void *parent, Streamable *sock);
@@ -35,12 +35,12 @@ protected:
      * @brief processClientRequest Process web client request
      * @return http responce code.
      */
-    CX2::Network::HTTP::Response::StatusCode processClientRequest() override;
+    Mantids::Network::HTTP::Response::StatusCode processClientRequest() override;
 
 private:
     bool containOnlyAllowedChars(const std::string &str);
-    void generateIndexOf(const CX2::Network::HTTP::sLocalRequestedFileInfo &fileInfo);
-    void generateTarGz(const CX2::Network::HTTP::sLocalRequestedFileInfo &fileInfo);
+    void generateIndexOf(const Mantids::Network::HTTP::sLocalRequestedFileInfo &fileInfo);
+    void generateTarGz(const Mantids::Network::HTTP::sLocalRequestedFileInfo &fileInfo);
 
     std::string getFancySize(size_t  size);
     webClientParams webClientParameters;

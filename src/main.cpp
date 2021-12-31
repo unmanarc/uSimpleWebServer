@@ -1,14 +1,14 @@
 #include <thread>
 
-#include <cx2_prg_service/application.h>
-#include <cx2_prg_logs/applog.h>
-#include <cx2_net_sockets/socket_tcp.h>
+#include <mdz_prg_service/application.h>
+#include <mdz_prg_logs/applog.h>
+#include <mdz_net_sockets/socket_tcp.h>
 #ifdef WITH_SSL_SUPPORT
-#include <cx2_net_sockets/socket_tls.h>
+#include <mdz_net_sockets/socket_tls.h>
 #endif
-#include <cx2_net_sockets/socket_acceptor_multithreaded.h>
-#include <cx2_mem_vars/a_uint16.h>
-#include <cx2_mem_vars/a_bool.h>
+#include <mdz_net_sockets/socket_acceptor_multithreaded.h>
+#include <mdz_mem_vars/a_uint16.h>
+#include <mdz_mem_vars/a_bool.h>
 
 #include <sys/time.h>
 #include <fstream>
@@ -18,9 +18,9 @@
 #include "config.h"
 
 
-using namespace CX2;
-using namespace CX2::Memory;
-using namespace CX2::Application;
+using namespace Mantids;
+using namespace Mantids::Memory;
+using namespace Mantids::Application;
 
 
 #ifdef _WIN32
@@ -29,7 +29,7 @@ using namespace CX2::Application;
 #define realpath(N,R) _fullpath((R),(N),_MAX_PATH)
 #endif
 
-class USimpleWebServer : public CX2::Application::Application
+class USimpleWebServer : public Mantids::Application::Application
 {
 public:
     USimpleWebServer() {
@@ -44,7 +44,7 @@ public:
     {
         globalArguments->setInifiniteWaitAtEnd(true);
 
-        webClientParameters.favicon = new CX2::Memory::Containers::B_MEM(favicon2_ico,favicon2_ico_len);
+        webClientParameters.favicon = new Mantids::Memory::Containers::B_MEM(favicon2_ico,favicon2_ico_len);
 
         /////////////////////////
         struct timeval time;
@@ -88,7 +88,7 @@ public:
     bool _config(int argc, char *argv[], Arguments::GlobalArguments * globalArguments)
     {
 #ifdef WITH_SSL_SUPPORT
-        CX2::Network::TLS::Socket_TLS::prepareTLS();
+        Mantids::Network::TLS::Socket_TLS::prepareTLS();
 #endif
         bool configUseFancy    = !((Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("sys"))->getValue();
 
