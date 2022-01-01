@@ -31,7 +31,7 @@ It can be built in "portable mode", and introduced as a very lightweight binary
 
 This guide is optimized for centos7 (you can adapt this for your OS), and the generated binary should be compatible with other neewer distributions...
 
-First, as prerequisite, you must have installed cxFramework2 (as static libs, and better if MinSizeRel)
+First, as prerequisite, you must have installed libMantids (as static libs, and better if MinSizeRel)
 
 and then...
 
@@ -148,6 +148,6 @@ This program was tested so far in:
 
 ### Overall Pre-requisites:
 
-* cxFramework2 (in static mode)
+* libMantids (in static mode)
 * cmake3
 * C++11 Compatible Compiler (like GCC >=5)
