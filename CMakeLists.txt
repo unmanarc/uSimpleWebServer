@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 include(GNUInstallDirs)
 
 set(APP_NAME "uSimpleWebServer")
-set(SVERSION "1.0.6")
+file (STRINGS "VERSION" SVERSION)
 project(${APP_NAME})
 project(${PROJECT_NAME} VERSION ${SVERSION} DESCRIPTION "Unmanarcs Simple Web Server")
 
@@ -70,8 +70,6 @@ else()
         target_link_libraries(${APP_NAME} "-lz")
     endif()
 endif()
-
-
 
 target_link_libraries(${APP_NAME} "-lpthread")
 target_link_libraries(${APP_NAME} "-ldl")
