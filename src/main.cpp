@@ -91,6 +91,7 @@ public:
         Mantids::Network::TLS::Socket_TLS::prepareTLS();
 #endif
         bool configUseFancy    = !((Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("sys"))->getValue();
+        fprintf(stderr,"# Arguments: %s\n", globalArguments->getCurrentProgramOptionsValuesAsBashLine().c_str());
 
         log = new Logs::AppLog();
         log->setPrintEmptyFields(true);

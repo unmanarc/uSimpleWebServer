@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 include(GNUInstallDirs)
 
 set(APP_NAME "uSimpleWebServer")
-set(SVERSION "1.0.5")
+set(SVERSION "1.0.6")
 project(${APP_NAME})
 project(${PROJECT_NAME} VERSION ${SVERSION} DESCRIPTION "Unmanarcs Simple Web Server")
 
@@ -21,6 +21,13 @@ if (EXTRAPREFIX)
     target_include_directories(${APP_NAME} PUBLIC ${EXTRAPREFIX}/include)
     target_link_libraries(${APP_NAME} "-L${EXTRAPREFIX}/lib")
     target_link_libraries(${APP_NAME} "-L${EXTRAPREFIX}/lib64")
+endif()
+
+if (CMAKE_INSTALL_PREFIX)
+    target_include_directories(${APP_NAME} PUBLIC ${CMAKE_INSTALL_PREFIX}/include)
+    target_include_directories(${APP_NAME} PUBLIC ${CMAKE_INSTALL_PREFIX}/usr/include)
+    target_link_libraries(${APP_NAME} "-L${CMAKE_INSTALL_PREFIX}/lib")
+    target_link_libraries(${APP_NAME} "-L${CMAKE_INSTALL_PREFIX}/lib64")
 endif()
 
 if (PORTABLE)
