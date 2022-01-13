@@ -1,5 +1,5 @@
 %define name uSimpleWebServer
-%define version 1.0.6
+%define version 1.0.7
 %define build_timestamp %{lua: print(os.date("%Y%m%d"))}
 
 Name:           %{name}

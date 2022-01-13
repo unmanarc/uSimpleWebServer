@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.12)
 include(GNUInstallDirs)
 
 set(APP_NAME "uSimpleWebServer")
-file (STRINGS "VERSION" SVERSION)
+set(SVERSION 1.0.7)
+
 project(${APP_NAME})
 project(${PROJECT_NAME} VERSION ${SVERSION} DESCRIPTION "Unmanarcs Simple Web Server")
 
