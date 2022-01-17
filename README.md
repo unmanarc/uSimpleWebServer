@@ -9,7 +9,7 @@ Main License: AGPL
 ## Builds
 
 - COPR (Fedora/CentOS/etc):  
-[![Copr build status](https://copr.fedorainfracloud.org/coprs/amizrachi/uSimpleWebServer/package/uSimpleWebServer/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/amizrachi/uSimpleWebServer/package/uSimpleWebServer/)
+[![Copr build status](https://copr.fedorainfracloud.org/coprs/amizrachi/unmanarc/package/uSimpleWebServer/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/amizrachi/unmanarc/package/uSimpleWebServer/)
 
 
 Install in Fedora/RHEL8/9:
