@@ -14,16 +14,14 @@ Main License: AGPL
 
 Install in Fedora/RHEL8/9:
 ```bash
-dnf copr enable amizrachi/libMantids
-dnf copr enable amizrachi/uSimpleWebServer
+dnf copr enable amizrachi/unmanarc
 
 dnf -y install uSimpleWebServer
 ```
 
 Install in RHEL7:
 ```bash
-yum copr enable amizrachi/libMantids
-yum copr enable amizrachi/uSimpleWebServer
+yum copr enable amizrachi/unmanarc
 
 yum -y install uSimpleWebServer
 ```
