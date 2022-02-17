@@ -47,10 +47,6 @@ public:
         webClientParameters.favicon = new Mantids::Memory::Containers::B_MEM(favicon2_ico,favicon2_ico_len);
 
         /////////////////////////
-        struct timeval time;
-        gettimeofday(&time,nullptr);
-        srand(((time.tv_sec * 1000) + (time.tv_usec / 1000))*getpid());
-
         globalArguments->setVersion( atoi(PROJECT_VER_MAJOR), atoi(PROJECT_VER_MINOR), atoi(PROJECT_VER_PATCH), "a" );
 
         webClientParameters.softwareVersion = globalArguments->getVersion();
