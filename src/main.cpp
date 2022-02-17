@@ -53,7 +53,7 @@ public:
         globalArguments->setLicense("AGPL");
         globalArguments->setAuthor("Aarón Mizrachi");
         globalArguments->setEmail("aaron@unmanarc.com");
-        globalArguments->setDescription(std::string("Unmanarc's HTTP Server"));
+        globalArguments->setDescription(std::string(PROJECT_DESCRIPTION));
 
         globalArguments->addCommandLineOption("Server Options", 'x', "execute" ,
 #ifndef _WIN32
