@@ -1,5 +1,5 @@
 %define name uSimpleWebServer
-%define version 1.0.8
+%define version 1.0.9
 %define build_timestamp %{lua: print(os.date("%Y%m%d"))}
 
 Name:           %{name}
@@ -33,14 +33,16 @@ Group:          Applications/Internet
 %define debug_package %{nil}
 %endif
 
+BuildRequires: libMantids-devel >= 2.5.9
 
 %if 0%{?rhel} == 6
-BuildRequires:  %{cmake} libMantids-devel openssl-devel zlib-devel boost-devel gcc-c++
+BuildRequires:  %{cmake} openssl-devel zlib-devel boost-devel gcc-c++
 %else
-BuildRequires:  %{cmake} libMantids-devel openssl-devel zlib-devel boost-devel gcc-c++
+BuildRequires:  %{cmake} openssl-devel zlib-devel boost-devel gcc-c++
 %endif
 
-Requires: libMantids zlib openssl boost-regex
+Requires: libMantids >= 2.5.9
+Requires: zlib openssl boost-regex
 
 %description
 This package contains a very efficient and simple web server that can be called from the command line
