@@ -12,6 +12,9 @@ struct webClientParams
         execute = false;
         rpcLog = nullptr;
         targz = false;
+
+        favicon = nullptr;
+        rpcLog = nullptr;
     }
 
     Mantids::Memory::Containers::B_MEM * favicon;
