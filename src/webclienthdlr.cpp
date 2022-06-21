@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <inttypes.h>
 
 using namespace Mantids::Network::HTTP;
 using namespace Mantids::Memory::Streams;
@@ -287,7 +288,7 @@ void WebClientHdlr::generateIndexOf(const sLocalRequestedFileInfo & fileInfo)
                         "            <td>%s<a href='%s'>%s</a>%s</td>\n"
                         "            <td>%s</td>\n"
                         "            <td>%s</td>\n"
-                        "            <td>%u:%u</td>\n"
+                        "            <td>%" PRIi32 ":%" PRIi32 "</td>\n"
                         "            <td>%s</td>\n"
                         "        </tr>\n",
                         S_ISDIR(stats.st_mode)?"<div class=folder16>[":"<div class=file16>",

@@ -11,6 +11,7 @@
 #include <mdz_mem_vars/a_bool.h>
 
 #include <sys/time.h>
+#include <inttypes.h>
 #include <fstream>
 
 #include "webclienthdlr.h"
@@ -175,7 +176,7 @@ public:
         socketTCP->setUseIPv6( !configUseIPv4->getValue() );
         if (!socketTCP->listenOn( listenPort, listenAddress.c_str() ))
         {
-            log->log0(__func__,Logs::LEVEL_CRITICAL, "Unable to listen at %s:%d",listenAddress.c_str(), listenPort);
+            log->log0(__func__,Logs::LEVEL_CRITICAL, "Unable to listen at %s:%" PRIu16,listenAddress.c_str(), listenPort);
             exit(-20);
             return false;
         }        
@@ -199,7 +200,7 @@ public:
         }
         multiThreadedAcceptor.startThreaded();
 
-        log->log0(__func__,Logs::LEVEL_INFO, "Web Server Loaded @%s:%d", listenAddress.c_str(),listenPort);
+        log->log0(__func__,Logs::LEVEL_INFO, "Web Server Loaded @%s:%" PRIu16, listenAddress.c_str(),listenPort);
         log->log0(__func__,Logs::LEVEL_INFO, "Document root: %s", rp);
 
         return 0;
