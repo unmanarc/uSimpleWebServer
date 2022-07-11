@@ -6,7 +6,7 @@
 #ifdef WITH_SSL_SUPPORT
 #include <mdz_net_sockets/socket_tls.h>
 #endif
-#include <mdz_net_sockets/socket_acceptor_multithreaded.h>
+#include <mdz_net_sockets/acceptor_multithreaded.h>
 #include <mdz_mem_vars/a_uint16.h>
 #include <mdz_mem_vars/a_bool.h>
 
@@ -62,30 +62,30 @@ public:
 #else
                                               "Execute any .exe/.bat file and get the output, ATT: disable targz if you want to keep your script sources private",
 #endif
-                                              "false", Abstract::TYPE_BOOL );
+                                              "false", Abstract::Var::TYPE_BOOL );
 
-        globalArguments->addCommandLineOption("Server Options", 'g', "targz" , "Allow to get server directories as tar.gz files (on-the-fly)"  , "false", Abstract::TYPE_BOOL );
+        globalArguments->addCommandLineOption("Server Options", 'g', "targz" , "Allow to get server directories as tar.gz files (on-the-fly)"  , "false", Abstract::Var::TYPE_BOOL );
 
-        globalArguments->addCommandLineOption("HTTP Options", 'r', "rootdir" , "HTTP Document Root Directory"  , ".", Abstract::TYPE_STRING );
-        globalArguments->addCommandLineOption("HTTP Options", 'l', "lport" , "Local HTTP Port"  , "8001", Abstract::TYPE_UINT16);
-        globalArguments->addCommandLineOption("HTTP Options", '4', "ipv4" , "Use only IPv4"  , "true", Abstract::TYPE_BOOL);
-        globalArguments->addCommandLineOption("HTTP Options", 'a', "laddr" , "Listen Address"  , "*", Abstract::TYPE_STRING);
-        globalArguments->addCommandLineOption("HTTP Options", 't', "threads" , "Max Concurrent Connections (Threads)"  , "1024", Abstract::TYPE_UINT16);
+        globalArguments->addCommandLineOption("HTTP Options", 'r', "rootdir" , "HTTP Document Root Directory"  , ".", Abstract::Var::TYPE_STRING );
+        globalArguments->addCommandLineOption("HTTP Options", 'l', "lport" , "Local HTTP Port"  , "8001", Abstract::Var::TYPE_UINT16);
+        globalArguments->addCommandLineOption("HTTP Options", '4', "ipv4" , "Use only IPv4"  , "true", Abstract::Var::TYPE_BOOL);
+        globalArguments->addCommandLineOption("HTTP Options", 'a', "laddr" , "Listen Address"  , "*", Abstract::Var::TYPE_STRING);
+        globalArguments->addCommandLineOption("HTTP Options", 't', "threads" , "Max Concurrent Connections (Threads)"  , "1024", Abstract::Var::TYPE_UINT16);
 
-        globalArguments->addCommandLineOption("HTTP Security", 'p', "passfile" , "HTTP User/Pass File"  , "", Abstract::TYPE_STRING);
+        globalArguments->addCommandLineOption("HTTP Security", 'p', "passfile" , "HTTP User/Pass File"  , "", Abstract::Var::TYPE_STRING);
 
-        globalArguments->addCommandLineOption("Other Options", 's', "sys" , "Journalctl Log Mode (don't print colors or dates)"  , "false", Abstract::TYPE_BOOL);
+        globalArguments->addCommandLineOption("Other Options", 's', "sys" , "Journalctl Log Mode (don't print colors or dates)"  , "false", Abstract::Var::TYPE_BOOL);
 
 #ifdef WITH_SSL_SUPPORT
-        globalArguments->addCommandLineOption("TLS Options", 'k', "keyfile" , "X.509 Private Key Path (if not defined, then HTTP)"  , "", Abstract::TYPE_STRING);
-        globalArguments->addCommandLineOption("TLS Options", 'c', "certfile" , "X.509 Certificate Path (if not defined, then HTTP)"  , "", Abstract::TYPE_STRING);
+        globalArguments->addCommandLineOption("TLS Options", 'k', "keyfile" , "X.509 Private Key Path (if not defined, then HTTP)"  , "", Abstract::Var::TYPE_STRING);
+        globalArguments->addCommandLineOption("TLS Options", 'c', "certfile" , "X.509 Certificate Path (if not defined, then HTTP)"  , "", Abstract::Var::TYPE_STRING);
 #endif
     }
 
     bool _config(int argc, char *argv[], Arguments::GlobalArguments * globalArguments)
     {
 #ifdef WITH_SSL_SUPPORT
-        Mantids::Network::TLS::Socket_TLS::prepareTLS();
+        Mantids::Network::Sockets::Socket_TLS::prepareTLS();
 #endif
         bool configUseFancy    = !((Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("sys"))->getValue();
         fprintf(stderr,"# Arguments: %s\n", globalArguments->getCurrentProgramOptionsValuesAsBashLine().c_str());
@@ -146,7 +146,7 @@ public:
 #endif
         Network::Sockets::Socket_TCP *socketTCP = new Network::Sockets::Socket_TCP;
 #ifdef WITH_SSL_SUPPORT
-        Network::TLS::Socket_TLS *socketTLS = new Network::TLS::Socket_TLS;
+        Network::Sockets::Socket_TLS *socketTLS = new Network::Sockets::Socket_TLS;
 
         if (keyfile.size())
         {
@@ -212,26 +212,26 @@ private:
     /**
      * callback when connection is fully established (if the callback returns false, connection socket won't be automatically closed/deleted)
      */
-    static bool _callbackOnConnect(void *, Network::Streams::StreamSocket *, const char *, bool);
+    static bool _callbackOnConnect(void *, Network::Sockets::Socket_StreamBase *, const char *, bool);
     /**
      * callback when protocol initialization failed (like bad X.509 on TLS) (if the callback returns false, connection socket won't be automatically closed/deleted)
      */
-    static bool _callbackOnInitFailed(void *, Network::Streams::StreamSocket *, const char *, bool);
+    static bool _callbackOnInitFailed(void *, Network::Sockets::Socket_StreamBase *, const char *, bool);
     /**
      * callback when timed out (all the thread queues are saturated) (this callback is called from acceptor thread, you should use it very quick)
      */
-    static void _callbackOnTimeOut(void *, Network::Streams::StreamSocket *, const char *, bool);
+    static void _callbackOnTimeOut(void *, Network::Sockets::Socket_StreamBase *, const char *, bool);
 
     std::string listenAddress;
     uint16_t listenPort;
     Logs::AppLog * log;   
     webClientParams webClientParameters;
 
-    Network::Sockets::Acceptors::Socket_Acceptor_MultiThreaded multiThreadedAcceptor;
+    Network::Sockets::Acceptors::MultiThreaded multiThreadedAcceptor;
 };
 
 
-bool USimpleWebServer::_callbackOnConnect(void *obj, Network::Streams::StreamSocket *s, const char *, bool)
+bool USimpleWebServer::_callbackOnConnect(void *obj, Network::Sockets::Socket_StreamBase *s, const char *, bool)
 {
     std::string tlsCN;
     USimpleWebServer * webServer = (USimpleWebServer *)obj;
@@ -240,7 +240,7 @@ bool USimpleWebServer::_callbackOnConnect(void *obj, Network::Streams::StreamSoc
     if ((isSecure=s->isSecure()) == true)
     {
 #ifdef WITH_SSL_SUPPORT
-        Network::TLS::Socket_TLS * tlsSock = (Network::TLS::Socket_TLS *)s;
+        Network::Sockets::Socket_TLS * tlsSock = (Network::Sockets::Socket_TLS *)s;
         tlsCN = tlsSock->getTLSPeerCN();
 #endif
     }
@@ -258,18 +258,18 @@ bool USimpleWebServer::_callbackOnConnect(void *obj, Network::Streams::StreamSoc
     webHandler.setWebClientParameters(webServer->getWebClientParameters());
 
     // Handle the Web Client here:
-    Memory::Streams::Parsing::ParseErrorMSG err;
+    Memory::Streams::Parser::ErrorMSG err;
     webHandler.parseObject(&err);
 
     return true;
 }
 
-bool USimpleWebServer::_callbackOnInitFailed(void *, Network::Streams::StreamSocket *s, const char *, bool)
+bool USimpleWebServer::_callbackOnInitFailed(void *, Network::Sockets::Socket_StreamBase *s, const char *, bool)
 {
     return true;
 }
 
-void USimpleWebServer::_callbackOnTimeOut(void *, Network::Streams::StreamSocket *s, const char *, bool)
+void USimpleWebServer::_callbackOnTimeOut(void *, Network::Sockets::Socket_StreamBase *s, const char *, bool)
 {
     s->writeString("HTTP/1.1 503 Service Temporarily Unavailable\r\n");
     s->writeString("Content-Type: text/html; charset=UTF-8\r\n");

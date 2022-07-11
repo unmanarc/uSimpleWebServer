@@ -25,10 +25,10 @@ struct webClientParams
     std::string user,pass;
 };
 
-class WebClientHdlr : public Mantids::Network::HTTP::HTTPv1_Server
+class WebClientHdlr : public Mantids::Protocols::HTTP::HTTPv1_Server
 {
 public:
-    WebClientHdlr(void *parent, Streamable *sock);
+    WebClientHdlr(void *parent, StreamableObject *sock);
     ~WebClientHdlr() override;
 
     void setWebClientParameters(const webClientParams &newWebClientParameters);
@@ -38,12 +38,12 @@ protected:
      * @brief processClientRequest Process web client request
      * @return http responce code.
      */
-    Mantids::Network::HTTP::Response::StatusCode processClientRequest() override;
+    Mantids::Protocols::HTTP::Response::Status::eCode processClientRequest() override;
 
 private:
     bool containOnlyAllowedChars(const std::string &str);
-    void generateIndexOf(const Mantids::Network::HTTP::sLocalRequestedFileInfo &fileInfo);
-    void generateTarGz(const Mantids::Network::HTTP::sLocalRequestedFileInfo &fileInfo);
+    void generateIndexOf(const sLocalRequestedFileInfo &fileInfo);
+    void generateTarGz(const sLocalRequestedFileInfo &fileInfo);
 
     std::string getFancySize(size_t  size);
     webClientParams webClientParameters;

@@ -12,10 +12,10 @@
 #include <sys/stat.h>
 #include <inttypes.h>
 
-using namespace Mantids::Network::HTTP;
+using namespace Mantids::Protocols::HTTP;
 using namespace Mantids::Memory::Streams;
 
-WebClientHdlr::WebClientHdlr(void *parent, Mantids::Memory::Streams::Streamable *sock) : HTTPv1_Server(sock)
+WebClientHdlr::WebClientHdlr(void *parent, Mantids::Memory::Streams::StreamableObject *sock) : HTTPv1_Server(sock)
 {
 }
 
@@ -24,11 +24,11 @@ WebClientHdlr::~WebClientHdlr()
 }
 
 
-Response::StatusCode WebClientHdlr::processClientRequest()
+Response::Status::eCode WebClientHdlr::processClientRequest()
 {
     //std::string sRealRelativePath, sRealFullPath;
     sLocalRequestedFileInfo fileInfo;
-    Response::StatusCode ret  = Response::StatusCode::S_404_NOT_FOUND;
+    Response::Status::eCode ret  = Response::Status::eCode::S_404_NOT_FOUND;
     auto reqData = getRequestActiveObjects();
 
     if (!webClientParameters.pass.empty())
@@ -40,7 +40,7 @@ Response::StatusCode WebClientHdlr::processClientRequest()
 
             *(getResponseActiveObjects().authenticate) = "Authentication Required";
 
-            ret = Response::StatusCode::S_401_UNAUTHORIZED;
+            ret = Response::Status::eCode::S_401_UNAUTHORIZED;
             return ret;
         }
     }
@@ -57,7 +57,7 @@ Response::StatusCode WebClientHdlr::processClientRequest()
         if (fileInfo.isExecutable)
         {
             // Execute...
-            ret = Response::StatusCode::S_200_OK;
+            ret = Response::Status::eCode::S_200_OK;
 
             std::string composedArgumentList, composedEnviromentList;
             Mantids::Helpers::AppSpawn * spawner = new Mantids::Helpers::AppSpawn();
@@ -65,7 +65,7 @@ Response::StatusCode WebClientHdlr::processClientRequest()
 
             spawner->addEnvironment(std::string("REMOTE_ADDR=") + remotePairAddress);
 
-            auto * postVars = getRequestVars(Mantids::Network::HTTP::HTTP_VarSource::HTTP_VARS_POST);
+            auto * postVars = getRequestVars(HTTP_VarSource::HTTP_VARS_POST);
             for (const auto & key : postVars->getKeysList())
             {
                 // Security: Don't insert dangerous chars... (it should allow base64, emails, etc)
@@ -75,7 +75,7 @@ Response::StatusCode WebClientHdlr::processClientRequest()
                 composedEnviromentList += (composedEnviromentList.empty()?"": " ") + std::string("POST_") + key;
             }
 
-            auto * getVars = getRequestVars(Mantids::Network::HTTP::HTTP_VarSource::HTTP_VARS_GET);
+            auto * getVars = getRequestVars(HTTP_VarSource::HTTP_VARS_GET);
             for ( uint32_t i=1; i<1024 && getVars->getValue("a" + std::to_string(i)); i++)
             {
                 spawner->addArgument(getVars->getStringValue("a" + std::to_string(i)));
@@ -100,7 +100,7 @@ Response::StatusCode WebClientHdlr::processClientRequest()
         else
         {
             //Serve as it comes...
-            ret = Response::StatusCode::S_200_OK;
+            ret = Response::Status::eCode::S_200_OK;
             webClientParameters.rpcLog->log(Mantids::Application::Logs::LEVEL_INFO, remotePairAddress,"", "","",  "fileServer", 2048, "R/%03d: %s",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealRelativePath.c_str());
             webClientParameters.rpcLog->log(Mantids::Application::Logs::LEVEL_DEBUG, remotePairAddress,"","", "", "fileServer", 2048, "R/D-LOCAL,%03d: %s",Response::Status::getHTTPStatusCodeTranslation(ret),fileInfo.sRealFullPath.c_str());
         }
@@ -110,9 +110,9 @@ Response::StatusCode WebClientHdlr::processClientRequest()
     else if (getLocalFilePathFromURI2(webClientParameters.httpDocumentRootDir, &fileInfo) && fileInfo.isDir)
     {
         if (fileInfo.sRealRelativePath == "") fileInfo.sRealRelativePath = "/";
-        ret = Response::StatusCode::S_200_OK;
+        ret = Response::Status::eCode::S_200_OK;
 
-        auto * vars = getRequestVars(Mantids::Network::HTTP::HTTP_VarSource::HTTP_VARS_GET);
+        auto * vars = getRequestVars(HTTP_VarSource::HTTP_VARS_GET);
 
         if (vars->getStringValue("action") == "targz" && webClientParameters.targz)
         {
@@ -131,7 +131,7 @@ Response::StatusCode WebClientHdlr::processClientRequest()
         webClientParameters.rpcLog->log(Mantids::Application::Logs::LEVEL_WARN, remotePairAddress,"","", "", "fileServer", 65535, "R/404: %s",getRequestURI().c_str());
     }
 
-    return Response::StatusCode::S_200_OK;
+    return Response::Status::eCode::S_200_OK;
 }
 
 bool WebClientHdlr::containOnlyAllowedChars(const std::string & str)
@@ -151,7 +151,7 @@ bool WebClientHdlr::containOnlyAllowedChars(const std::string & str)
     return true;
 
 }
-void WebClientHdlr::generateTarGz(const Mantids::Network::HTTP::sLocalRequestedFileInfo &fileInfo)
+void WebClientHdlr::generateTarGz(const sLocalRequestedFileInfo &fileInfo)
 {
     *(getResponseActiveObjects().contentType) = "application/octet-stream";
 
