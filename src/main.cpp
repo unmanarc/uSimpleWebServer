@@ -77,7 +77,8 @@ public:
         globalArguments->addCommandLineOption("Other Options", 's', "sys" , "Journalctl Log Mode (don't print colors or dates)"  , "false", Abstract::Var::TYPE_BOOL);
 
 #ifdef WITH_SSL_SUPPORT
-        globalArguments->addCommandLineOption("TLS Options", 'k', "keyfile" , "X.509 Private Key Path (if not defined, then HTTP)"  , "", Abstract::Var::TYPE_STRING);
+        globalArguments->addCommandLineOption("TLS Options",   0, "cafile"   , "X.509 Certificate Authority Path (if not defined, then without client authentication)"  , "", Abstract::Var::TYPE_STRING);
+        globalArguments->addCommandLineOption("TLS Options", 'k', "keyfile"  , "X.509 Private Key Path (if not defined, then HTTP)"  , "", Abstract::Var::TYPE_STRING);
         globalArguments->addCommandLineOption("TLS Options", 'c', "certfile" , "X.509 Certificate Path (if not defined, then HTTP)"  , "", Abstract::Var::TYPE_STRING);
 #endif
     }
@@ -143,10 +144,18 @@ public:
 #ifdef WITH_SSL_SUPPORT
         std::string certfile = globalArguments->getCommandLineOptionValue("certfile")->toString();
         std::string keyfile  = globalArguments->getCommandLineOptionValue("keyfile")->toString();
+        std::string cafile  = globalArguments->getCommandLineOptionValue("cafile")->toString();
 #endif
         Network::Sockets::Socket_TCP *socketTCP = new Network::Sockets::Socket_TCP;
 #ifdef WITH_SSL_SUPPORT
         Network::Sockets::Socket_TLS *socketTLS = new Network::Sockets::Socket_TLS;
+
+        if ((keyfile.size() && certfile.empty()) || (keyfile.empty() && certfile.size()))
+        {
+            log->log0(__func__,Logs::LEVEL_CRITICAL, "X.509 Private Key and Cert File should be configured in pairs.");
+            exit(-13);
+            return false;
+        }
 
         if (keyfile.size())
         {
@@ -158,7 +167,6 @@ public:
             }
             socketTLS->setTLSPrivateKeyPath(keyfile.c_str());
         }
-
         if (certfile.size())
         {
             if (access(certfile.c_str(),R_OK))
@@ -169,15 +177,27 @@ public:
             }
             socketTLS->setTLSPublicKeyPath(certfile.c_str());
         }
+        if (cafile.size())
+        {
+            if (access(cafile.c_str(),R_OK))
+            {
+                log->log0(__func__,Logs::LEVEL_CRITICAL, "X.509 Certificate Authority not found.");
+                exit(-12);
+                return false;
+            }
+            socketTLS->setTLSCertificateAuthorityPath(cafile.c_str());
+        }
 
         if (keyfile.size() && certfile.size())
             socketTCP = socketTLS;
+
 #endif
         socketTCP->setUseIPv6( !configUseIPv4->getValue() );
         if (!socketTCP->listenOn( listenPort, listenAddress.c_str() ))
         {
             log->log0(__func__,Logs::LEVEL_CRITICAL, "Unable to listen at %s:%" PRIu16,listenAddress.c_str(), listenPort);
             exit(-20);
+            delete socketTCP;
             return false;
         }        
         multiThreadedAcceptor.setAcceptorSocket(socketTCP);
@@ -271,11 +291,14 @@ bool USimpleWebServer::_callbackOnInitFailed(void *, Network::Sockets::Socket_St
 
 void USimpleWebServer::_callbackOnTimeOut(void *, Network::Sockets::Socket_StreamBase *s, const char *, bool)
 {
-    s->writeString("HTTP/1.1 503 Service Temporarily Unavailable\r\n");
-    s->writeString("Content-Type: text/html; charset=UTF-8\r\n");
-    s->writeString("Connection: close\r\n");
-    s->writeString("\r\n");
-    s->writeString("<center><h1>503 Service Temporarily Unavailable</h1></center><hr>\r\n");
+    s->writeString(
+                    "HTTP/1.1 503 Service Temporarily Unavailable\r\n"
+                    "Content-Type: text/html; charset=UTF-8\r\n"
+                    "Connection: close\r\n"
+                    "\r\n"
+                    "<center><h1>503 Service Temporarily Unavailable</h1></center>\r\n"
+                    "<hr>\r\n"
+                   );
 }
 
 const webClientParams &USimpleWebServer::getWebClientParameters() const
