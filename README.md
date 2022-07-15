@@ -6,25 +6,39 @@ Author: Aaron Mizrachi (unmanarc) <aaron@unmanarc.com>
 Main License: AGPL
 
 ***
-## Builds
+## Installing packages (HOWTO)
 
 - COPR (Fedora/CentOS/etc):  
 [![Copr build status](https://copr.fedorainfracloud.org/coprs/amizrachi/unmanarc/package/uSimpleWebServer/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/amizrachi/unmanarc/package/uSimpleWebServer/)
 
 
-Install in Fedora/RHEL8/9:
-```bash
-dnf copr enable amizrachi/unmanarc
+### Simple installation guide for RHEL:
 
+To activate our repo's and download/install the software:
+
+In RHEL7:
+```bash
+# Install EPEL Repo + COPR
+yum -y install epel-release
+yum -y install yum-plugin-copr
+
+# Install unmanarc's copr
+yum copr enable amizrachi/unmanarc -y
+yum -y install uSimpleWebServer
+```
+
+In RHEL8:
+```bash
+# Install EPEL Repo
+dnf -y install 'dnf-command(config-manager)'
+dnf config-manager --set-enabled powertools
+dnf -y install epel-release
+
+# Install unmanarc's copr
+dnf copr enable amizrachi/unmanarc -y
 dnf -y install uSimpleWebServer
 ```
 
-Install in RHEL7:
-```bash
-yum copr enable amizrachi/unmanarc
-
-yum -y install uSimpleWebServer
-```
 
 ***
 ## Project Description
