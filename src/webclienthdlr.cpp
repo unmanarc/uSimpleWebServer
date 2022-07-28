@@ -436,7 +436,12 @@ void WebClientHdlr::generateIndexOf(const sLocalRequestedFileInfo & fileInfo)
     //https://www.iconfinder.com/icons/315179/document_text_icon
     //https://www.iconfinder.com/icons/314895/document_text_icon
 
-    const char * uploadHTML =
+    const char * _HTML_targz = "<tr class='tableupload'>"
+                              "     <td class='tableupload' align=left> -> <a href=\"./?action=targz\">Download dir as tar.gz</a>  "
+                              "     </td>"
+                              "</tr>";
+
+    const char * _HTML_upload =
             "    <form method='post' enctype='multipart/form-data'>\n"
             "        <table align='center' width='80%' class='tableupload'>\n"
             "            <tr width='100%' class='tableupload'>\n"
@@ -451,7 +456,7 @@ void WebClientHdlr::generateIndexOf(const sLocalRequestedFileInfo & fileInfo)
             "        </table>\n"
             "    </form>\n";
 
-    const char * javascript =
+    const char * _JS_upload =
             "<script src='/.usws/assets/js/jquery.min.js'></script>\n"
             "<script>\n"
             "// From: https://www.w3schools.com/js/js_cookies.asp\n"
@@ -495,7 +500,7 @@ void WebClientHdlr::generateIndexOf(const sLocalRequestedFileInfo & fileInfo)
             "});\n"
             "</script>\n";
 
-    const char * pageCSS =
+    const char * _CSS_page =
             "<style>\n"
             "        table,\n"
             "        th,\n"
@@ -563,8 +568,8 @@ void WebClientHdlr::generateIndexOf(const sLocalRequestedFileInfo & fileInfo)
                                          "<body>\n"
                                          "        <table align='center' width='80%%' class='tableupload'>\n"
                                          "          <tr class='tableupload'><td class='tableupload'><h1>Index of %s</h1></td></tr>\n"
+                                         "          %s\n"
                                          "        </table>\n"
-                                         "    %s\n"
                                          "    %s\n"
                                          "    <hr><center><br><br>\n"
                                          "    <table align='center' width='80%%'>\n"
@@ -576,10 +581,10 @@ void WebClientHdlr::generateIndexOf(const sLocalRequestedFileInfo & fileInfo)
                                          "            <td width=20px><b>Permissions</b></td>\n"
                                          "        </tr>\n",
                                          htmlEncode(fileInfo.sRealRelativePath).c_str(),
-                                         pageCSS,javascript,
+                                         _CSS_page,_JS_upload,
                                          htmlEncode(fileInfo.sRealRelativePath).c_str(),
-                                         webClientParameters.targz?"-> <a href=\"./?action=targz\">Download as tar.gz</a>":"",
-                                         webClientParameters.uploads?uploadHTML:"");
+                                         webClientParameters.targz? _HTML_targz :"",
+                                         webClientParameters.uploads?_HTML_upload:"");
 
     DIR *dirp;
     struct dirent *dp;
