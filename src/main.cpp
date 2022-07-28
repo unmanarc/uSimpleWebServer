@@ -16,6 +16,7 @@
 
 #include "webclienthdlr.h"
 #include "favicon.h"
+#include "jquery.h"
 #include "config.h"
 
 
@@ -33,7 +34,11 @@ using namespace Mantids::Application;
 class USimpleWebServer : public Mantids::Application::Application
 {
 public:
+    static Mantids::Memory::Containers::B_MEM * jquery;
+    static Mantids::Memory::Containers::B_MEM * favicon;
+
     USimpleWebServer() {
+
     }
 
     void _shutdown()
@@ -45,7 +50,8 @@ public:
     {
         globalArguments->setInifiniteWaitAtEnd(true);
 
-        webClientParameters.favicon = new Mantids::Memory::Containers::B_MEM(favicon2_ico,favicon2_ico_len);
+        favicon = new Mantids::Memory::Containers::B_MEM(favicon2_ico,favicon2_ico_len);
+        jquery = new Mantids::Memory::Containers::B_MEM(jquery_3_6_0,sizeof(jquery_3_6_0));
 
         /////////////////////////
         globalArguments->setVersion( atoi(PROJECT_VER_MAJOR), atoi(PROJECT_VER_MINOR), atoi(PROJECT_VER_PATCH), "a" );
@@ -65,6 +71,8 @@ public:
                                               "false", Abstract::Var::TYPE_BOOL );
 
         globalArguments->addCommandLineOption("Server Options", 'g', "targz" , "Allow to get server directories as tar.gz files (on-the-fly)"  , "false", Abstract::Var::TYPE_BOOL );
+        globalArguments->addCommandLineOption("Server Options", 'u', "uploads" , "Allow file uploads"  , "false", Abstract::Var::TYPE_BOOL );
+        globalArguments->addCommandLineOption("Server Options", 'o', "overwrite" , "Allow overwrite on file uploads and/or delete files"  , "false", Abstract::Var::TYPE_BOOL );
 
         globalArguments->addCommandLineOption("HTTP Options", 'r', "rootdir" , "HTTP Document Root Directory"  , ".", Abstract::Var::TYPE_STRING );
         globalArguments->addCommandLineOption("HTTP Options", 'l', "lport" , "Local HTTP Port"  , "8001", Abstract::Var::TYPE_UINT16);
@@ -138,6 +146,8 @@ public:
         listenPort            = ((Memory::Abstract::UINT16 *)globalArguments->getCommandLineOptionValue("lport"))->getValue();
         webClientParameters.execute = ((Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("execute"))->getValue();
         webClientParameters.targz = ((Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("targz"))->getValue();
+        webClientParameters.uploads = ((Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("uploads"))->getValue();
+        webClientParameters.overwrite = ((Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("overwrite"))->getValue();
 
         auto configUseIPv4    = (Memory::Abstract::BOOL *)globalArguments->getCommandLineOptionValue("ipv4");
         auto configThreads    = (Memory::Abstract::UINT16 *)globalArguments->getCommandLineOptionValue("threads");
@@ -146,6 +156,7 @@ public:
         std::string keyfile  = globalArguments->getCommandLineOptionValue("keyfile")->toString();
         std::string cafile  = globalArguments->getCommandLineOptionValue("cafile")->toString();
 #endif
+
         Network::Sockets::Socket_TCP *socketTCP = new Network::Sockets::Socket_TCP;
 #ifdef WITH_SSL_SUPPORT
         Network::Sockets::Socket_TLS *socketTLS = new Network::Sockets::Socket_TLS;
@@ -187,10 +198,13 @@ public:
             }
             socketTLS->setTLSCertificateAuthorityPath(cafile.c_str());
         }
-
         if (keyfile.size() && certfile.size())
+        {
+            delete socketTCP;
             socketTCP = socketTLS;
-
+        }
+        else
+            delete socketTLS;
 #endif
         socketTCP->setUseIPv6( !configUseIPv4->getValue() );
         if (!socketTCP->listenOn( listenPort, listenAddress.c_str() ))
@@ -199,7 +213,7 @@ public:
             exit(-20);
             delete socketTCP;
             return false;
-        }        
+        }
         multiThreadedAcceptor.setAcceptorSocket(socketTCP);
         multiThreadedAcceptor.setCallbackOnConnect(_callbackOnConnect,this);
         multiThreadedAcceptor.setCallbackOnInitFail(_callbackOnInitFailed,this);
@@ -268,7 +282,8 @@ bool USimpleWebServer::_callbackOnConnect(void *obj, Network::Sockets::Socket_St
     // Prepare the web services handler.
     WebClientHdlr webHandler(nullptr,s);
 
-    webHandler.addStaticContent("/favicon.ico",webServer->getWebClientParameters().favicon);
+    webHandler.addStaticContent("/favicon.ico",favicon);
+    webHandler.addStaticContent("/.usws/assets/js/jquery.min.js",jquery);
 
     char inetAddr[INET6_ADDRSTRLEN];
     s->getRemotePair(inetAddr);
@@ -311,3 +326,7 @@ int main(int argc, char *argv[])
     USimpleWebServer * main = new USimpleWebServer;
     return StartApplication(argc,argv,main);
 }
+
+
+Mantids::Memory::Containers::B_MEM * USimpleWebServer::jquery = nullptr;
+Mantids::Memory::Containers::B_MEM * USimpleWebServer::favicon = nullptr;

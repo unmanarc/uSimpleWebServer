@@ -136,7 +136,7 @@ Service Options:
 2. If you want to enable the execution mode (--execute), please don't activate the targz mode, because the binary folder can be retrieved trough this method, exposing all the executable codes (moreover if you store database connection passwords in your binaries). 
 3. When execution mode is enabled, every single executable file or file marked as executable will be executed when called. Please double check what executables are behind the HTTP Document Root directory, validate the input and check that the input will not trigger command execution injections in other applications.
 4. It's not recommended to run this as root, specially with execution mode enabled.
-5. For passfile, you should create a file where the first line is the user, and the second line is the password.
+5. For passfile, you should create a file where the first line is the user, and the second line is the password in clear text.
 
 **For HTTPS Only:**  
 1. Remember to set up private signed and trusted X.509 Certificates, if not, the communication can be eavesdropped or tampered!!!
