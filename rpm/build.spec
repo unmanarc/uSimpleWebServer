@@ -1,5 +1,5 @@
 %define name uSimpleWebServer
-%define version 1.1.4
+%define version 1.1.5
 %define build_timestamp %{lua: print(os.date("%Y%m%d"))}
 
 Name:           %{name}
@@ -33,7 +33,7 @@ Group:          Applications/Internet
 %define debug_package %{nil}
 %endif
 
-BuildRequires: libMantids-devel >= 2.7.2
+BuildRequires: libMantids-devel >= 2.7.3
 
 %if 0%{?rhel} == 6
 BuildRequires:  %{cmake} openssl-devel zlib-devel boost-devel gcc-c++
@@ -41,7 +41,7 @@ BuildRequires:  %{cmake} openssl-devel zlib-devel boost-devel gcc-c++
 BuildRequires:  %{cmake} openssl-devel zlib-devel boost-devel gcc-c++
 %endif
 
-Requires: libMantids >= 2.7.2
+Requires: libMantids >= 2.7.3
 Requires: zlib openssl boost-regex
 
 %description

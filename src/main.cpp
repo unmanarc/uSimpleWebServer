@@ -161,6 +161,9 @@ public:
 #ifdef WITH_SSL_SUPPORT
         Network::Sockets::Socket_TLS *socketTLS = new Network::Sockets::Socket_TLS;
 
+        // Set the SO default security level:
+        socketTLS->keys.setSecurityLevel(-1);
+
         if ((keyfile.size() && certfile.empty()) || (keyfile.empty() && certfile.size()))
         {
             log->log0(__func__,Logs::LEVEL_CRITICAL, "X.509 Private Key and Cert File should be configured in pairs.");
