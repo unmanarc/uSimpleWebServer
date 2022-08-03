@@ -176,7 +176,7 @@ public:
                 exit(-10);
                 return false;
             }
-            socketTLS->setTLSPrivateKeyPath(keyfile.c_str());
+            socketTLS->keys.loadPrivateKeyFromPEMFile(keyfile.c_str());
         }
         if (certfile.size())
         {
@@ -186,7 +186,7 @@ public:
                 exit(-11);
                 return false;
             }
-            socketTLS->setTLSPublicKeyPath(certfile.c_str());
+            socketTLS->keys.loadPublicKeyFromPEMFile(certfile.c_str());
         }
         if (cafile.size())
         {
@@ -196,7 +196,7 @@ public:
                 exit(-12);
                 return false;
             }
-            socketTLS->setTLSCertificateAuthorityPath(cafile.c_str());
+            socketTLS->keys.loadCAFromPEMFile(cafile.c_str());
         }
         if (keyfile.size() && certfile.size())
         {
