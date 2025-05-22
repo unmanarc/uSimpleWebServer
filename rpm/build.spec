@@ -33,16 +33,21 @@ Group:          Applications/Internet
 %define debug_package %{nil}
 %endif
 
-BuildRequires: libMantids-devel >= 2.7.3
-
-%if 0%{?rhel} == 6
-BuildRequires:  %{cmake} openssl-devel zlib-devel boost-devel gcc-c++
+BuildRequires: libMantids-devel >= 2.8.19
+BuildRequires:  %{cmake} zlib-devel boost-devel gcc-c++
+%if 0%{?rhel} == 7
+BuildRequires:  openssl11-devel
 %else
-BuildRequires:  %{cmake} openssl-devel zlib-devel boost-devel gcc-c++
+BuildRequires:  openssl-devel
 %endif
 
-Requires: libMantids >= 2.7.3
-Requires: zlib openssl boost-regex
+Requires: libMantids >= 2.8.19
+Requires: zlib boost-regex
+%if 0%{?rhel} == 7
+Requires:       openssl11
+%else
+Requires:       openssl
+%endif
 
 %description
 This package contains a very efficient and simple web server that can be called from the command line
@@ -51,8 +56,13 @@ This package contains a very efficient and simple web server that can be called 
 %autosetup -n %{name}-master
 
 %build
-%{cmake} -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_BUILD_TYPE=MinSizeRel -DWITH_SSL_SUPPORT=ON
-%{cmake} -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_BUILD_TYPE=MinSizeRel -DWITH_SSL_SUPPORT=ON
+
+%if 0%{?rhel} == 7
+%{cmake} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_BUILD_TYPE=MinSizeRel -DWITH_SSL_SUPPORT=ON -DSSLRHEL7=ON
+%else
+%{cmake} -DCMAKE_VERBOSE_MAKEFILE:BOOL=ON -DCMAKE_INSTALL_PREFIX:PATH=/usr -DCMAKE_BUILD_TYPE=MinSizeRel -DWITH_SSL_SUPPORT=ON
+%endif
+
 make %{?_smp_mflags}
 
 %clean

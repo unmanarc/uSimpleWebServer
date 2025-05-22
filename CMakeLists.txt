@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 include(GNUInstallDirs)
 
 set(APP_NAME "uSimpleWebServer")
-set(SVERSION 1.1.5)
+set(SVERSION 1.1.6)
 
 project(${APP_NAME})
 project(${PROJECT_NAME} VERSION ${SVERSION} DESCRIPTION "Unmanarcs Simple Web Server")
@@ -66,8 +66,19 @@ else()
 
     if (WITH_SSL_SUPPORT)
         add_definitions(-DWITH_SSL_SUPPORT)
-        target_link_libraries(${APP_NAME} "-lssl")
-        target_link_libraries(${APP_NAME} "-lcrypto")
+
+        option(SSLRHEL7 "OpenSSL 1.1 For Red Hat 7.x provided by EPEL" OFF)
+        find_package(PkgConfig REQUIRED)
+        if (SSLRHEL7)
+            pkg_check_modules(OPENSSL REQUIRED libssl11)
+        else()
+            pkg_check_modules(OPENSSL REQUIRED libssl)
+        endif()
+        target_include_directories(${APP_NAME} PUBLIC ${OPENSSL_INCLUDE_DIRS})
+        target_compile_options(${APP_NAME} PUBLIC ${OPENSSL_CFLAGS_OTHER})
+        target_link_libraries(${APP_NAME} ${OPENSSL_STATIC_LDFLAGS})
+
+
         target_link_libraries(${APP_NAME} "-lz")
     endif()
 endif()
